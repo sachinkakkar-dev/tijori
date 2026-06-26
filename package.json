@@ -1,7 +1,7 @@
 {
   "name": "tijori-server",
   "version": "1.0.0",
-  "description": "Tijori family vault relay — Google OAuth, families, invites, roles, encrypted-at-rest store-and-forward.",
+  "description": "Tijori family vault relay — Google OAuth, families, invites, roles, end to end encryption.", 
   "main": "server.js",
   "scripts": {
     "dev": "node --watch --env-file=.env server.js",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotend": "^17.4.2",
     "express": "^4.19.2",
     "google-auth-library": "^9.11.0",
     "ws": "^8.17.1"
