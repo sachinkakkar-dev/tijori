@@ -422,24 +422,28 @@
   // ---------- API ----------
   async function api(path,method,body){
     const r=await fetch(CONFIG.API+path,{method:method||"GET",headers:{"Content-Type":"application/json","Authorization":"Bearer "+S.idToken},body:body?JSON.stringify(body):undefined});
-    if(r.status===401){toast("Session expired — sign in again");show("signin");throw new Error("401");}
+    if(r.status===401){try{localStorage.removeItem("tijori:session");}catch(e){}S.idToken="";toast("Session expired — sign in again");show("signin");throw new Error("401");}
     if(!r.ok){let e={};try{e=await r.json();}catch(x){}throw new Error(e.error||("http_"+r.status));}
     return r.json();
   }
 
   // ---------- Google sign-in ----------
   window.gisReady=function(){
-    if(!window.google||!google.accounts){$("#gisNote").textContent="Google sign-in failed to load.";return;}
+    if(!window.google||!google.accounts){if(!S.idToken)$("#gisNote").textContent="Google sign-in failed to load.";return;}
     if(CONFIG.GOOGLE_CLIENT_ID.indexOf("REPLACE")===0){$("#gisNote").textContent="Set CONFIG.GOOGLE_CLIENT_ID to enable sign-in.";return;}
     google.accounts.id.initialize({client_id:CONFIG.GOOGLE_CLIENT_ID,callback:onCredential,auto_select:true,cancel_on_tap_outside:false,itp_support:true});
     google.accounts.id.renderButton($("#gbtnGoogle"),{theme:"filled_blue",size:"large",shape:"pill",width:280});
     $("#gisNote").textContent="We only verify your email. Your family key never reaches Google or the server.";
-    try{ google.accounts.id.prompt(); }catch(e){}   // returning users get re-signed-in without a click
+    if(!S.idToken){try{ google.accounts.id.prompt(); }catch(e){}}   // only if we don't already have a saved session
   };
   window.onCredential=async function(resp){
-    S.idToken=resp.credential;
-    try{ await loadMe(); show("home"); }
-    catch(e){ toast("Sign-in failed: "+e.message); }
+    try{
+      const r=await fetch(CONFIG.API+"/api/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:resp.credential})});
+      if(!r.ok)throw new Error("session");
+      const d=await r.json();
+      S.idToken=d.token; try{localStorage.setItem("tijori:session",d.token);}catch(e){}
+      await loadMe(); show("home");
+    }catch(e){ toast("Sign-in failed: "+e.message); }
   };
 
   async function loadMe(){
@@ -721,7 +725,7 @@
       <button class="btn ghost" style="margin-top:10px" onclick="signOut()">Sign out</button><div style="height:18px"></div>`;
     show("profile");};
   window.leaveFamily=function(){if(S.ws){try{S.ws.close();}catch(e){}}S.ws=null;S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];loadMe().then(()=>show("home")).catch(()=>show("home"));};
-  window.signOut=function(){if(S.ws){try{S.ws.close();}catch(e){}}try{google.accounts.id.disableAutoSelect();}catch(e){}S.idToken="";S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];show("signin");};
+  window.signOut=function(){if(S.ws){try{S.ws.close();}catch(e){}}try{google.accounts.id.disableAutoSelect();}catch(e){}try{localStorage.removeItem("tijori:session");}catch(e){}S.idToken="";S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];show("signin");};
 
   function tick(){const c=$("#clock");if(!c)return;const d=new Date();let h=d.getHours()%12||12,m=d.getMinutes();c.textContent=h+":"+(m<10?"0":"")+m;}
   tick();setInterval(tick,30000);
@@ -744,6 +748,14 @@
   window.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("#modalBack").classList.contains("show"))closeModal();else if($("#a2hs").classList.contains("show"))dismissA2HS();}});
   if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}
   updateA2HS();
+
+  // restore a saved session so a refresh doesn't force re-login
+  (function restoreSession(){
+    let t=null; try{t=localStorage.getItem("tijori:session");}catch(e){}
+    if(!t)return;
+    S.idToken=t;
+    loadMe().then(()=>show("home")).catch(()=>{ try{localStorage.removeItem("tijori:session");}catch(e){} S.idToken=""; });
+  })();
 })();
 </script>
 </body>

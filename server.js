@@ -24,6 +24,28 @@ const oauth = new OAuth2Client(CLIENT_ID);
 let db = store.load();
 const persist = () => store.save(db);
 
+// ---- session tokens (so a refresh doesn't force re-login) ----
+const SESSION_TTL = 30 * 24 * 3600; // 30 days
+const SESSION_SECRET = crypto.createHash('sha256')
+  .update((process.env.SERVER_ENC_KEY || 'dev') + '|session').digest();
+const b64url = (b) => Buffer.from(b).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = (s) => Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+function signSession(payload) {
+  const body = b64url(JSON.stringify(payload));
+  const mac = b64url(crypto.createHmac('sha256', SESSION_SECRET).update(body).digest());
+  return body + '.' + mac;
+}
+function verifySession(token) {
+  const [body, mac] = (token || '').split('.');
+  if (!body || !mac) throw new Error('bad');
+  const expect = b64url(crypto.createHmac('sha256', SESSION_SECRET).update(body).digest());
+  const a = Buffer.from(mac), b = Buffer.from(expect);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw new Error('bad_sig');
+  const p = JSON.parse(unb64url(body).toString('utf8'));
+  if (p.exp && Date.now() / 1000 > p.exp) throw new Error('expired');
+  return { sub: p.sub, email: p.email, name: p.name };
+}
+
 // ---- helpers ----
 async function verifyToken(token) {
   const ticket = await oauth.verifyIdToken({ idToken: token, audience: CLIENT_ID });
@@ -34,8 +56,8 @@ function bearer(req) {
   const h = req.headers.authorization || '';
   return h.startsWith('Bearer ') ? h.slice(7) : '';
 }
-async function auth(req, res, next) {
-  try { req.user = await verifyToken(bearer(req)); next(); }
+function auth(req, res, next) {
+  try { req.user = verifySession(bearer(req)); next(); }
   catch (e) { res.status(401).json({ error: 'auth' }); }
 }
 function famSummary(f, sub) {
@@ -55,6 +77,17 @@ app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public'))); // serve index.html at the same origin
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+// exchange a Google ID token (one time, at sign-in) for a long-lived session token
+app.post('/api/session', async (req, res) => {
+  try {
+    const u = await verifyToken(req.body.idToken || bearer(req));
+    const exp = Math.floor(Date.now() / 1000) + SESSION_TTL;
+    res.json({ token: signSession({ sub: u.sub, email: u.email, name: u.name, exp }), user: u });
+  } catch (e) {
+    res.status(401).json({ error: 'google_auth' });
+  }
+});
 
 // who am I + my families + invites waiting for me
 app.get('/api/me', auth, (req, res) => {
@@ -194,7 +227,7 @@ wss.on('connection', (ws) => {
     let msg; try { msg = JSON.parse(raw.toString()); } catch { return; }
     if (msg.type === 'auth') {
       try {
-        const u = await verifyToken(msg.token);
+        const u = verifySession(msg.token);
         const fams = new Set(Object.values(db.families).filter(f => f.members[u.sub]).map(f => f.id));
         clients.set(ws, { sub: u.sub, email: u.email, families: fams });
         ws.send(JSON.stringify({ type: 'ready' }));
