@@ -200,7 +200,11 @@
   .a2hs .esc{flex:none;border:none;background:transparent;color:var(--faint);font-size:21px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
   .a2hs .esc:active{background:var(--line2)}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-  @media (max-width:430px){body{padding:0}.device{height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none}}
+  @media (max-width:500px), (display-mode:standalone){
+    html,body{background:var(--app)}
+    body{padding:0;margin:0;min-height:100dvh;display:block;background-image:none}
+    .device{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none}
+  }
 </style>
 </head>
 <body>
@@ -427,9 +431,10 @@
   window.gisReady=function(){
     if(!window.google||!google.accounts){$("#gisNote").textContent="Google sign-in failed to load.";return;}
     if(CONFIG.GOOGLE_CLIENT_ID.indexOf("REPLACE")===0){$("#gisNote").textContent="Set CONFIG.GOOGLE_CLIENT_ID to enable sign-in.";return;}
-    google.accounts.id.initialize({client_id:CONFIG.GOOGLE_CLIENT_ID,callback:onCredential});
+    google.accounts.id.initialize({client_id:CONFIG.GOOGLE_CLIENT_ID,callback:onCredential,auto_select:true,cancel_on_tap_outside:false,itp_support:true});
     google.accounts.id.renderButton($("#gbtnGoogle"),{theme:"filled_blue",size:"large",shape:"pill",width:280});
     $("#gisNote").textContent="We only verify your email. Your family key never reaches Google or the server.";
+    try{ google.accounts.id.prompt(); }catch(e){}   // returning users get re-signed-in without a click
   };
   window.onCredential=async function(resp){
     S.idToken=resp.credential;
