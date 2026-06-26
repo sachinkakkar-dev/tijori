@@ -61,6 +61,10 @@
   .field input:focus,.field select:focus{border-color:var(--ink2);box-shadow:0 0 0 3px rgba(30,74,83,.12)}
   .field .help{font-size:11.5px;color:var(--muted)}
   .field .help.warn{color:var(--down);font-weight:600}
+  .pwrap{position:relative;display:flex}
+  .pwrap input{width:100%;padding-right:42px}
+  .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:7px;display:grid;place-items:center;border-radius:8px}
+  .eye:active{background:var(--line2)}
   .callout{background:var(--accent-soft);border:1px solid #ecdcbd;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#7a5a23;line-height:1.5;margin:4px 0 16px;display:flex;gap:9px}
   .callout svg{flex:none;margin-top:1px}
   .btn{width:100%;border:none;border-radius:13px;padding:15px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff}
@@ -209,8 +213,10 @@
       <p class="h-cap">You'll be the maintainer. Set two keys — each person remembers just one.</p>
       <div style="margin-top:16px">
         <div class="field"><label>Family name</label><input id="cName" placeholder="e.g. Sharma Family" oninput="cValidate()"></div>
-        <div class="field"><label>Family key — maintainers &amp; viewers</label><input id="cFull" type="password" placeholder="Unlocks details and amounts" oninput="cValidate()"></div>
-        <div class="field"><label>Custodian key — details only</label><input id="cCust" type="password" placeholder="Unlocks details, never amounts" oninput="cValidate()"><span class="help" id="cKeyHelp"></span></div>
+        <div class="field"><label>Family key — maintainers &amp; viewers</label><div class="pwrap"><input id="cFull" type="password" placeholder="Unlocks details and amounts" oninput="cValidate()"><button type="button" class="eye" id="eyeFull" aria-label="Show" onclick="toggleEye('cFull',this)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.6"/></svg></button></div></div>
+        <div class="field"><label>Confirm family key</label><input id="cFull2" type="password" placeholder="Re-enter family key" oninput="cValidate()"></div>
+        <div class="field"><label>Custodian key — details only</label><div class="pwrap"><input id="cCust" type="password" placeholder="Unlocks details, never amounts" oninput="cValidate()"><button type="button" class="eye" id="eyeCust" aria-label="Show" onclick="toggleEye('cCust',this)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.6"/></svg></button></div></div>
+        <div class="field"><label>Confirm custodian key</label><input id="cCust2" type="password" placeholder="Re-enter custodian key" oninput="cValidate()"><span class="help" id="cKeyHelp"></span></div>
         <div class="callout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="#B07A2A" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Each member uses <b>one</b> key: maintainers &amp; viewers get the family key, custodians get the custodian key. Both unlock the real encryption keys on-device — the server never sees any of them.</span></div>
         <button class="btn" id="cBtn" disabled onclick="createFamily()">Create family</button>
       </div>
@@ -411,8 +417,21 @@
   window.declineInvite=async function(fid){try{await api("/api/families/"+fid+"/decline","POST");await loadMe();}catch(e){toast(e.message);}};
 
   // ---------- create ----------
-  window.resetCreate=function(){$("#cName").value="";$("#cFull").value="";$("#cCust").value="";$("#cKeyHelp").textContent="";$("#cBtn").disabled=true;};
-  window.cValidate=function(){const n=$("#cName").value.trim(),fk=$("#cFull").value,ck=$("#cCust").value,h=$("#cKeyHelp");const ok=n&&fk.length>=4&&ck.length>=4&&fk!==ck;if(fk&&ck&&fk===ck){h.className="help warn";h.textContent="Family and custodian keys must be different.";}else if((fk&&fk.length<4)||(ck&&ck.length<4)){h.className="help";h.textContent="Each key needs at least 4 characters.";}else if(ok){h.className="help";h.style.color="var(--up)";h.textContent="✓ Looks good — remember both exactly.";}else h.textContent="";$("#cBtn").disabled=!ok;};
+  const EYE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const EYEOFF='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 3l18 18M10.6 10.7a3 3 0 0 0 4.2 4.2M9.9 5.2A9.5 9.5 0 0 1 12 5c6.4 0 10 7 10 7a16.8 16.8 0 0 1-3.3 4M6 6.2A16.6 16.6 0 0 0 2 12s3.6 6.5 10 6.5a9.6 9.6 0 0 0 3-.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  window.toggleEye=function(id,btn){const el=document.getElementById(id);if(!el)return;const reveal=el.type==="password";el.type=reveal?"text":"password";btn.innerHTML=reveal?EYEOFF:EYE;btn.setAttribute("aria-label",reveal?"Hide":"Show");};
+  window.resetCreate=function(){["cName","cFull","cFull2","cCust","cCust2"].forEach(id=>{const e=$("#"+id);if(e){e.value="";if(id!=="cName")e.type="password";}});["eyeFull","eyeCust"].forEach(id=>{const b=$("#"+id);if(b)b.innerHTML=EYE;});const h=$("#cKeyHelp");h.textContent="";h.style.color="";$("#cBtn").disabled=true;};
+  window.cValidate=function(){
+    const n=$("#cName").value.trim(),fk=$("#cFull").value,fk2=$("#cFull2").value,ck=$("#cCust").value,ck2=$("#cCust2").value,h=$("#cKeyHelp");
+    let msg="",warn=false,ok=false;
+    if(fk&&fk.length<4)msg="Family key needs at least 4 characters.";
+    else if(ck&&ck.length<4)msg="Custodian key needs at least 4 characters.";
+    else if(fk&&ck&&fk===ck){warn=true;msg="Family and custodian keys must be different.";}
+    else if(fk2&&fk!==fk2){warn=true;msg="Family keys don't match.";}
+    else if(ck2&&ck!==ck2){warn=true;msg="Custodian keys don't match.";}
+    else if(n&&fk.length>=4&&ck.length>=4&&fk!==ck&&fk===fk2&&ck===ck2){ok=true;msg="✓ Keys confirmed — give each to the right people exactly as typed.";}
+    h.className=warn?"help warn":"help";h.style.color=ok?"var(--up)":"";h.textContent=msg;$("#cBtn").disabled=!ok;
+  };
   window.createFamily=async function(){
     const name=$("#cName").value.trim(),fullPass=$("#cFull").value,custPass=$("#cCust").value;
     try{
@@ -433,7 +452,7 @@
     $("#uSeal").innerHTML=`<div style="width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:20px;background:${colorFor(fid)}">${(name||"F")[0].toUpperCase()}</div>`;
     $("#uSeal").style.background="transparent";$("#uSeal").style.border="none";
     const cust=roleHint==="custodian";
-    $("#uFields").innerHTML=`<div class="field"><label>${cust?"Custodian key":"Family key"}</label><input id="uKey" type="password" placeholder="${cust?"Custodian passphrase — details only":"Family passphrase — unlocks everything"}" onkeydown="if(event.key==='Enter')doUnlock()"></div>`;
+    $("#uFields").innerHTML=`<div class="field"><label>${cust?"Custodian key":"Family key"}</label><div class="pwrap"><input id="uKey" type="password" placeholder="${cust?"Custodian passphrase — details only":"Family passphrase — unlocks everything"}" onkeydown="if(event.key==='Enter')doUnlock()"><button type="button" class="eye" aria-label="Show" onclick="toggleEye('uKey',this)">${EYE}</button></div></div>`;
     $("#uHelp").textContent="";show("unlock");setTimeout(()=>{const x=$("#uKey");if(x)x.focus();},120);};
   window.doUnlock=async function(){const pass=$("#uKey").value;if(!pass)return;
     try{await openExisting(pendingFam.id,pendingFam.name,pendingFam.role,pass);}
