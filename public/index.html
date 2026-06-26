@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Tijori</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer onload="gisReady()"></script>
+<style>
+  :root{
+    --bg:#E7EBEE; --app:#F2F5F7; --surface:#FFFFFF;
+    --ink:#0F3138; --ink2:#1E4A53; --muted:#6B7C81; --faint:#9AA8AC;
+    --line:#E3E8EA; --line2:#EEF1F2;
+    --accent:#C98A3A; --accent-soft:#F6ECDB;
+    --up:#1E7A5A; --down:#C0492F; --down-soft:#F7ECE9;
+    --bank:#2F6F8F; --fd:#3E7E63; --trading:#B5653A; --mf:#6E5A9E; --property:#A8803C;
+    --pf:#4C7A8C; --nsf:#7A7A4C; --gold:#C9A227; --locker:#8A6D3B; --insurance:#4F7A6A;
+    --serif:"Space Grotesk", ui-monospace, monospace;
+    --sans:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --r:16px;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 14px;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 50% -10%, #EEF1F3 0%, #E2E7EA 60%, #DCE2E5 100%);}
+  .device{width:390px;max-width:100%;height:844px;max-height:calc(100vh - 40px);background:var(--app);border-radius:46px;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 0 #fff inset,0 30px 70px -28px rgba(15,49,56,.55),0 0 0 11px #11242a,0 0 0 13px #1d3a41;}
+  .statusbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:10px 30px 0;font-size:13px;font-weight:600;color:var(--ink);flex:none}
+  .statusbar .right{display:flex;gap:6px;align-items:center;opacity:.85}
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;scrollbar-width:none}
+  .screen::-webkit-scrollbar{display:none}
+  .screen.active{display:flex}
+  .pad{padding:0 20px}
+  .apphead{padding:8px 18px 14px;display:flex;align-items:center;gap:11px;flex:none}
+  .apphead .seal{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:17px;flex:none;box-shadow:0 4px 10px -4px rgba(0,0,0,.35)}
+  .apphead .htxt{flex:1;min-width:0}
+  .apphead .htxt .fam{font-family:var(--serif);font-weight:600;font-size:16px;line-height:1.1;display:flex;align-items:center;gap:7px}
+  .apphead .htxt .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .apphead .pf{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:600;flex:none;border:none;cursor:pointer}
+  .rolechip{font-size:10.5px;font-weight:600;padding:4px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+  .rolechip.maint{color:var(--up);background:#EAF5EF;border-color:#CDE8DC}
+  .rolechip.view{color:var(--muted);background:#EEF1F2;border-color:var(--line)}
+  .rolechip.cust{color:#8A6D3B;background:#F5EFE2;border-color:#E7D9BE}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .h-title{font-family:var(--serif);font-weight:600;font-size:24px;margin:2px 0 0}
+  .h-cap{font-size:13px;color:var(--muted);margin:4px 0 0}
+  #signin{justify-content:space-between;background:linear-gradient(180deg,#0F3138,#14424A 58%,#103138);color:#EAF1F2}
+  #signin .si-top{padding:60px 30px 0;flex:1;display:flex;flex-direction:column;justify-content:center}
+  #signin .lock{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:rgba(201,138,58,.16);border:1px solid rgba(201,138,58,.4);margin-bottom:22px}
+  #signin h1{font-family:var(--serif);font-weight:600;font-size:32px;margin:0 0 8px}
+  #signin h1 .dot{color:var(--accent)}
+  #signin p.tag{margin:0 0 22px;color:#A9C2C6;font-size:14px;line-height:1.5;max-width:32ch}
+  #signin .si-bot{padding:0 24px 40px;display:flex;flex-direction:column;align-items:center}
+  #gbtnGoogle{min-height:44px}
+  #signin .fine{color:#8FAAB0;font-size:12px;text-align:center;margin:16px auto 0;max-width:34ch;line-height:1.5}
+  .topback{display:flex;align-items:center;gap:6px;padding:6px 20px 2px;flex:none}
+  .topback button{background:none;border:none;color:var(--ink2);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--sans);padding:6px 0}
+  .keyicon{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;background:var(--accent-soft);border:1px solid #ecdcbd;margin:8px 0 16px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+  .field label{font-size:12px;font-weight:600;color:var(--ink2)}
+  .field input,.field select{font-family:var(--sans);font-size:14px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#FbFcFc;color:var(--ink);outline:none}
+  .field input:focus,.field select:focus{border-color:var(--ink2);box-shadow:0 0 0 3px rgba(30,74,83,.12)}
+  .field .help{font-size:11.5px;color:var(--muted)}
+  .field .help.warn{color:var(--down);font-weight:600}
+  .callout{background:var(--accent-soft);border:1px solid #ecdcbd;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#7a5a23;line-height:1.5;margin:4px 0 16px;display:flex;gap:9px}
+  .callout svg{flex:none;margin-top:1px}
+  .btn{width:100%;border:none;border-radius:13px;padding:15px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff}
+  .btn:disabled{background:#C5CED0;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--ink2);border:1px solid var(--line)}
+  .btn.sm{padding:10px 14px;width:auto;font-size:13px;border-radius:10px}
+  .famcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:12px;cursor:pointer}
+  .famcard:active{transform:scale(.992)}
+  .famcard .row1{display:flex;align-items:center;gap:12px}
+  .famcard .seal{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:18px;flex:none}
+  .famcard .nm{flex:1;min-width:0}.famcard .nm b{font-size:16px;font-weight:600;display:block}
+  .famcard .nm span{font-size:12px;color:var(--muted)}
+  .invcard{background:var(--surface);border:1px solid #E7D9BE;border-radius:var(--r);padding:15px;margin-top:12px}
+  .invcard .top{display:flex;align-items:center;gap:11px}
+  .invcard . icn,.invcard .ic2{width:38px;height:38px;border-radius:11px;background:var(--accent-soft);display:grid;place-items:center;flex:none}
+  .invcard .nm{flex:1}.invcard .nm b{font-size:15px;font-weight:600;display:block}.invcard .nm span{font-size:12px;color:var(--muted)}
+  .invcard .acts{display:flex;gap:9px;margin-top:13px}
+  .addfam{margin-top:14px;border:1.5px dashed var(--line);border-radius:var(--r);padding:14px;text-align:center;color:var(--ink2);font-weight:600;font-size:14px;background:transparent;width:100%;cursor:pointer;font-family:var(--sans)}
+  .nw{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:4px}
+  .nw .lbl{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+  .nw .big{font-family:var(--serif);font-weight:600;font-size:32px;letter-spacing:-.01em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+  .nw .albits{display:flex;gap:14px;margin-top:8px;font-size:11.5px;color:var(--muted)}
+  .nw .albits b{color:var(--ink);font-family:var(--serif);font-weight:600}
+  .nw .albits .neg b{color:var(--down)}
+  .contrib{margin-top:16px}
+  .contrib .track{height:13px;border-radius:8px;overflow:hidden;display:flex;background:var(--line2)}
+  .contrib .seg{height:100%}
+  .contrib .legend{display:flex;flex-wrap:wrap;gap:9px 15px;margin-top:12px}
+  .contrib .lg{display:flex;align-items:center;gap:7px;font-size:12px}
+  .contrib .lg .av{margin:0;width:21px;height:21px;border:none}
+  .contrib .lg b{font-weight:600}.contrib .lg span{color:var(--muted)}
+  .sectitle{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
+  .sectitle h3{font-family:var(--serif);font-weight:600;font-size:15px;margin:0}
+  .sectitle a{font-size:12px;color:var(--accent);font-weight:600;cursor:pointer}
+  .sectitle .eyebrow{font-size:10.5px}
+  .alloc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .alloc .ar{display:flex;align-items:center;gap:11px;padding:13px 15px;border-top:1px solid var(--line2)}
+  .alloc .ar:first-child{border-top:none}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .alloc .ar .nm{flex:1;font-size:14px;font-weight:500}
+  .alloc .ar .ct{font-size:11px;color:var(--faint);margin-left:2px}
+  .alloc .ar .v{font-family:var(--serif);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+  .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:600;border:2px solid var(--surface)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .hold{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px;display:flex;align-items:center;gap:12px;cursor:pointer}
+  .hold .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:16px}
+  .hold .mid{flex:1;min-width:0}
+  .hold .mid .t{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .keychip{font-size:10px;font-weight:600;color:var(--ink2);background:#EFF2F3;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-family:var(--serif);letter-spacing:.02em}
+  .hold .mid .s{font-size:12px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .hold .mid .s .by{display:flex;align-items:center;gap:5px}
+  .hold .rt{text-align:right;flex:none}
+  .hold .rt .v{font-family:var(--serif);font-weight:600;font-size:14.5px;font-variant-numeric:tabular-nums}
+  .hold .rt .v.neg{color:var(--down)}
+  .hold .rt .v.mask{color:var(--faint);letter-spacing:1px}
+  .hold .rt .you{font-size:10px;color:var(--up);font-weight:600;margin-top:3px}
+  .split{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-top:10px}
+  .split h4{margin:0 0 3px;font-size:14px;font-weight:600}
+  .split .cap{font-size:11.5px;color:var(--muted);margin-bottom:11px}
+  .split .track{height:14px;border-radius:8px;overflow:hidden;display:flex;background:var(--line2)}
+  .split .seg{height:100%}
+  .split .legend{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+  .split .lr{display:flex;align-items:center;gap:9px;font-size:13px}
+  .split .lr .d{width:10px;height:10px;border-radius:3px;flex:none}
+  .split .lr .nm{flex:1}
+  .split .lr .vv{font-family:var(--serif);font-weight:600;font-variant-numeric:tabular-nums}
+  .split .lr .pp{color:var(--muted);font-size:11.5px;margin-left:7px}
+  .mcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;display:flex;align-items:center;gap:12px}
+  .mcard .av{margin:0;width:42px;height:42px;font-size:15px;border:none}
+  .mcard .mid{flex:1;min-width:0}
+  .mcard .mid b{font-size:15px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .mcard .mid .em{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mcard .mid .meta{font-size:11px;color:var(--faint);margin-top:5px}
+  .youtag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:6px}
+  .pend{opacity:.7}
+  .invite{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .invite .eyebrow{margin-bottom:10px}
+  .seg{display:flex;background:#EEF1F2;border-radius:11px;padding:3px;gap:3px}
+  .seg button{flex:1;border:none;background:transparent;padding:9px 6px;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .grouphdr{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:18px 0 8px}
+  .typegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .typecard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 13px;cursor:pointer;text-align:left}
+  .typecard .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:15px;margin-bottom:9px}
+  .typecard b{font-size:13.5px;font-weight:600;display:block}
+  .typecard span{font-size:11px;color:var(--muted)}
+  .drow{display:flex;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid var(--line2);font-size:14px}
+  .drow:first-of-type{border-top:none}
+  .drow .k{color:var(--muted)}
+  .drow .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .drow .v.neg{color:var(--down)} .drow .v.mask{color:var(--faint)}
+  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px 24px;background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
+  .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:4px 0}
+  .tab.on{color:var(--ink)}
+  .fab{width:50px;height:50px;border-radius:16px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 22px -8px rgba(201,138,58,.7);margin-bottom:6px;flex:none}
+  .empty{padding:38px 24px;text-align:center;color:var(--muted)}
+  .empty b{display:block;color:var(--ink);font-family:var(--serif);font-size:16px;margin-bottom:6px;font-weight:600}
+  .note{background:#F1F4F5;border:1px solid var(--line);border-radius:12px;padding:12px 13px;font-size:12.5px;color:var(--ink2);line-height:1.5;display:flex;gap:9px;margin-top:12px}
+  .note svg{flex:none;margin-top:1px}
+  .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap;z-index:30;box-shadow:0 12px 26px -10px rgba(0,0,0,.5);max-width:86%}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  @media (max-width:430px){body{padding:0}.device{height:100vh;max-height:none;border-radius:0;box-shadow:none}.statusbar{padding-top:14px}}
+</style>
+</head>
+<body>
+<div class="device" id="device">
+  <div class="statusbar"><span id="clock">9:41</span>
+    <span class="right">
+      <svg width="15" height="11" viewBox="0 0 15 11"><rect x="0" y="7" width="2.5" height="4" rx="1" fill="#0F3138"/><rect x="4" y="4.5" width="2.5" height="6.5" rx="1" fill="#0F3138"/><rect x="8" y="2" width="2.5" height="9" rx="1" fill="#0F3138"/><rect x="12" y="0" width="2.5" height="11" rx="1" fill="#0F3138" opacity=".35"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.6" fill="none" stroke="#0F3138" stroke-opacity=".4"/><rect x="2" y="2" width="14" height="7" rx="1.4" fill="#0F3138"/></svg>
+    </span>
+  </div>
+
+  <!-- SIGN IN -->
+  <section class="screen active" id="signin">
+    <div class="si-top">
+      <div class="lock"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="3" stroke="#C98A3A" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#C98A3A" stroke-width="1.7"/><circle cx="12" cy="15.5" r="1.6" fill="#C98A3A"/></svg></div>
+      <h1>Tijori<span class="dot">.</span></h1>
+      <p class="tag">Your family's accounts, end-to-end encrypted. Sign in with Google to see your families.</p>
+    </div>
+    <div class="si-bot">
+      <div id="gbtnGoogle"></div>
+      <p class="fine" id="gisNote">Loading Google sign-in…</p>
+    </div>
+  </section>
+
+  <!-- HOME: families + invites -->
+  <section class="screen" id="home">
+    <div class="apphead" style="padding-top:14px">
+      <div class="htxt"><div class="eyebrow" id="homeEmail">Signed in</div><h1 class="h-title" style="margin-top:3px">Your families</h1></div>
+      <button class="pf" id="homeAv" style="background:#2F6F8F" onclick="renderProfile()">?</button>
+    </div>
+    <div class="pad" id="homeBody" style="padding-bottom:30px;margin-top:2px"></div>
+  </section>
+
+  <!-- CREATE FAMILY -->
+  <section class="screen" id="create">
+    <div class="topback"><button onclick="show('home')">‹ Back</button></div>
+    <div class="pad" style="padding-bottom:30px">
+      <div class="keyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="12" r="4" stroke="#C98A3A" stroke-width="1.8"/><path d="M11.5 12H21l-2 2.5M16 12v3" stroke="#C98A3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1 class="h-title">Create a family</h1>
+      <p class="h-cap">You'll be the maintainer. Set two keys — each person remembers just one.</p>
+      <div style="margin-top:16px">
+        <div class="field"><label>Family name</label><input id="cName" placeholder="e.g. Sharma Family" oninput="cValidate()"></div>
+        <div class="field"><label>Family key — maintainers &amp; viewers</label><input id="cFull" type="password" placeholder="Unlocks details and amounts" oninput="cValidate()"></div>
+        <div class="field"><label>Custodian key — details only</label><input id="cCust" type="password" placeholder="Unlocks details, never amounts" oninput="cValidate()"><span class="help" id="cKeyHelp"></span></div>
+        <div class="callout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="#B07A2A" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Each member uses <b>one</b> key: maintainers &amp; viewers get the family key, custodians get the custodian key. Both unlock the real encryption keys on-device — the server never sees any of them.</span></div>
+        <button class="btn" id="cBtn" disabled onclick="createFamily()">Create family</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- UNLOCK (enter master key to open) -->
+  <section class="screen" id="unlock">
+    <div class="topback"><button onclick="show('home')">‹ Families</button></div>
+    <div class="pad" style="padding-bottom:30px">
+      <div class="keyicon" id="uSeal"></div>
+      <h1 class="h-title" id="uName">Open family</h1>
+      <p class="h-cap">Enter the family key(s) to decrypt this family on your device.</p>
+      <div style="margin-top:16px">
+        <div id="uFields"></div>
+        <span class="help" id="uHelp"></span>
+        <button class="btn" style="margin-top:8px" onclick="doUnlock()">Unlock</button>
+        <div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>Keys live only in memory while the family is open, and are asked for each time.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <section class="screen" id="app">
+    <div class="apphead" id="appHead"></div>
+    <div id="appBody" style="flex:1;overflow-y:auto;overflow-x:hidden" class="pad"></div>
+    <div class="tabbar" id="tabbar"></div>
+  </section>
+
+  <section class="screen" id="addType">
+    <div class="topback"><button onclick="goApp('overview')">‹ Cancel</button></div>
+    <div class="pad" style="padding-bottom:30px"><h1 class="h-title">Add an entry</h1><p class="h-cap">You'll maintain this. Pick what it is.</p><div id="typeGroups"></div></div>
+  </section>
+
+  <section class="screen" id="addForm">
+    <div class="topback"><button onclick="show('addType')">‹ Back</button></div>
+    <div class="pad" style="padding-bottom:30px"><h1 class="h-title" id="formTitle">New entry</h1><p class="h-cap" id="formCap"></p><div id="formFields" style="margin-top:14px"></div><button class="btn" id="saveBtn" disabled onclick="saveEntry()">Save &amp; publish</button></div>
+  </section>
+
+  <section class="screen" id="detail">
+    <div class="topback"><button onclick="show('app')">‹ Back</button></div>
+    <div class="pad" id="detailBody" style="padding-bottom:30px"></div>
+  </section>
+
+  <section class="screen" id="profile">
+    <div class="topback"><button onclick="back2()">‹ Back</button></div>
+    <div class="pad" id="profileBody" style="padding-bottom:30px"></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ===================== CONFIG =====================
+  const CONFIG = {
+    GOOGLE_CLIENT_ID: "354574717304-kkiei79rnvmjvbrgdj289paaf49uhcdm.apps.googleusercontent.com",
+    API: "",                                   // "" = same origin (served behind the same nginx)
+    WS:  (location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/ws",
+    PBKDF2_ITERS: 200000
+  };
+  // ==================================================
+
+  const TYPES={
+    bank:{label:"Bank account",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
+    fd:{label:"Fixed deposit",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"]]},
+    trading:{label:"Trading / equity",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📈",color:"var(--trading)",keyLabel:"Account number",fields:[["label","Provider","text"],["key","Account number","key"],["demat","Demat account (optional)","opt"],["value","Value","money"]]},
+    mf:{label:"Mutual fund",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📊",color:"var(--mf)",keyLabel:"A/C / Folio no.",fields:[["label","Provider / AMC","text"],["key","A/C no. / Folio no.","key"],["value","Value","money"]]},
+    pf:{label:"PF · PPF / EPF",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"🏛️",color:"var(--pf)",keyLabel:"Account / UAN",fields:[["sub","PPF or EPF","text"],["label","Institution","text"],["key","Account / UAN","key"],["value","Balance","money"]]},
+    nsf:{label:"National savings (NSF)",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"📜",color:"var(--nsf)",keyLabel:"Certificate no.",fields:[["label","Scheme / holder","text"],["key","Certificate no.","key"],["value","Value","money"]]},
+    property:{label:"Property",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🏠",color:"var(--property)",keyLabel:"Location",fields:[["key","Location","key"],["value","Market value","money"],["papers","Location of papers","text"]]},
+    gold:{label:"Gold / Silver",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🪙",color:"var(--gold)",keyLabel:"Identifier",fields:[["label","Form (jewellery / coins / bars)","text"],["key","Label / identifier","key"],["weight","Weight (optional)","opt"],["papers","Where it's kept","text"],["value","Value","money"]]},
+    locker:{label:"Bank locker",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🗄️",color:"var(--locker)",keyLabel:"Locker no.",fields:[["label","Bank","text"],["branch","Branch","text"],["key","Locker no.","key"],["papers","Key / papers held by","text"],["value","Est. contents value","money"]]},
+    insurance:{label:"Insurance · life / health",grp:"Insurance",nature:"financial",liq:"illiquid",risk:"low",icon:"🛡️",color:"var(--insurance)",keyLabel:"Policy no.",fields:[["sub","Kind (Term / ULIP / Endowment / Health)","text"],["label","Insurer","text"],["key","Policy no.","key"],["cover","Sum assured / cover","money"],["nominee","Nominee (optional)","opt"],["value","Market / terminal value (ULIP, endowment)","money"]]}
+  };
+  const LIAB={
+    loan:{label:"Loan",grp:"Liabilities",icon:"📉",color:"var(--down)",keyLabel:"Loan a/c no.",fields:[["label","Bank","text"],["purpose","Purpose","text"],["key","Loan a/c no.","key"],["value","Outstanding","money"]]},
+    creditcard:{label:"Credit card",grp:"Liabilities",icon:"💳",color:"var(--down)",keyLabel:"Card (last 4)",fields:[["label","Issuer","text"],["key","Card (last 4)","key"],["limit","Credit limit (optional)","opt"],["value","Outstanding","money"]]}
+  };
+  const GROUPS=["Financial","Physical","Insurance","Liabilities"];
+  const meta=e=> e.kind==="liab"?LIAB[e.type]:TYPES[e.type];
+  const softTint={"var(--bank)":"#E9F1F6","var(--fd)":"#EAF3EE","var(--trading)":"#F6ECE4","var(--mf)":"#F0EBF6","var(--property)":"#F5EEDF","var(--pf)":"#E8F0F3","var(--nsf)":"#F1F1E6","var(--gold)":"#F8F1D8","var(--locker)":"#F1ECE1","var(--insurance)":"#E8F1ED","var(--down)":"#F7ECE9"};
+  const tint=c=>softTint[c]||"#EEF1F2";
+
+  const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[]};
+  const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
+  let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
+  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="viewer";
+  let homeFamilies=[], homeInvites=[];
+
+  const $=s=>document.querySelector(s);
+  const PALETTE=["#2F6F8F","#B5653A","#6E5A9E","#3E7E63","#A8803C","#4C7A8C","#8A6D3B","#4F7A6A"];
+  function initialsOf(n){const p=(n||"").trim().split(/\s+/);return (((p[0]||"?")[0]||"?")+(p[1]?p[1][0]:"")).toUpperCase();}
+  function colorFor(id){id=id||"x";let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0;return PALETTE[h%PALETTE.length];}
+
+  function inr(n){n=Math.round(n||0);const neg=n<0;n=Math.abs(n);let s=n.toString();if(s.length>3){const l=s.slice(-3);s=s.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,",")+","+l;}return (neg?"-₹":"₹")+s;}
+  function inrC(n){const neg=n<0;n=Math.abs(n);let r;if(n>=1e7)r="₹"+(n/1e7).toFixed(2).replace(/\.?0+$/,"")+" Cr";else if(n>=1e5)r="₹"+(n/1e5).toFixed(2).replace(/\.?0+$/,"")+" L";else r=inr(n);return (neg?"− ":"")+r;}
+  function amt(n,c){if(!showAmt())return '<span style="color:var(--faint);letter-spacing:1px">•••</span>';return c?inrC(n):inr(n);}
+
+  const cur=()=>LIVE;
+  const me=f=>f.members.find(m=>m.you)||f.members[0]||{name:S.name,initials:initialsOf(S.name),color:colorFor(S.sub),you:true};
+  const member=(f,id)=>f.members.find(m=>m.id===id)||{name:"—",initials:"?",color:"#999",you:false};
+  const role=()=>S.myRole, canEdit=()=>S.myRole==="maintainer", showAmt=()=>!!S.valKey&&!valDecryptFailed;
+
+  const assetEntries=f=>f.entries.filter(e=>e.kind==="asset");
+  const liabEntries=f=>f.entries.filter(e=>e.kind==="liab");
+  const valued=f=>f.entries.filter(e=>e.kind==="asset"&&(e.type!=="insurance"||(e.value||0)>0));
+  const insEntries=f=>f.entries.filter(e=>e.type==="insurance");
+  const isMedical=e=>/health|medical/i.test(e.sub||"");
+  const assetsTotal=f=>valued(f).reduce((s,e)=>s+(e.value||0),0);
+  const liabTotal=f=>liabEntries(f).reduce((s,e)=>s+(e.value||0),0);
+  const netWorth=f=>assetsTotal(f)-liabTotal(f);
+  const memberAssets=(f,id)=>valued(f).filter(e=>e.owner===id).reduce((s,e)=>s+(e.value||0),0);
+  const memberCount=(f,id)=>f.entries.filter(e=>e.owner===id).length;
+  function natureTotals(f){const o={financial:0,physical:0};valued(f).forEach(e=>{o[TYPES[e.type].nature]+=e.value||0;});return o;}
+  function liqTotals(f){const o={liquid:0,illiquid:0};valued(f).forEach(e=>{o[TYPES[e.type].liq]+=e.value||0;});return o;}
+  function riskTotals(f){const o={high:0,low:0};valued(f).forEach(e=>{o[TYPES[e.type].risk]+=e.value||0;});return o;}
+  function natureCounts(f){const o={financial:0,physical:0};valued(f).forEach(e=>{o[TYPES[e.type].nature]++;});return o;}
+  function insCover(f){const o={life:0,medical:0};insEntries(f).forEach(e=>{o[isMedical(e)?"medical":"life"]+=(e.cover||0);});return o;}
+  function insCounts(f){const o={life:0,medical:0};insEntries(f).forEach(e=>{o[isMedical(e)?"medical":"life"]++;});return o;}
+  function entryTitle(e){const t=e.type;if(t==="property")return e.key;if(t==="locker")return (e.label||"Locker")+(e.branch?" · "+e.branch:"");if(t==="gold")return "Gold · "+(e.label||"holding");if(t==="loan")return (e.label||"Loan")+(e.purpose?" · "+e.purpose:"");return e.label||meta(e).label;}
+
+  function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));const sc=$("#"+id);if(sc)sc.scrollTop=0;}
+  function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2400);}
+  window.back2=function(){ show(S.familyId?"app":"home"); };
+
+  // ---------- crypto ----------
+  const TE=new TextEncoder(),TD=new TextDecoder();
+  const b64=b=>btoa(String.fromCharCode.apply(null,new Uint8Array(b)));
+  const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  async function encryptObj(key,obj){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,TE.encode(JSON.stringify(obj)));return{iv:b64(iv),ct:b64(ct)};}
+  async function decryptObj(key,iv,ct){const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(iv)},key,unb64(ct));return JSON.parse(TD.decode(pt));}
+  // two-key split: money fields go under the values key, everything else under the details key
+  const MONEY=["value","cover","limit"];
+  function stripMoney(e){const o={};for(const k in e)if(MONEY.indexOf(k)<0)o[k]=e[k];return o;}
+  function pickMoney(e){const o={};MONEY.forEach(k=>{if(e[k]!==undefined)o[k]=e[k];});return o;}
+  async function decodeObject(cipher){
+    let det;
+    if(cipher&&cipher.d) det=await decryptObj(S.detKey,cipher.d.iv,cipher.d.ct);
+    else det=await decryptObj(S.detKey,cipher.iv,cipher.ct); // legacy single-blob
+    let values=null;
+    if(S.valKey&&cipher&&cipher.v){ try{const vv=await decryptObj(S.valKey,cipher.v.iv,cipher.v.ct);values=vv.values||{};}catch(e){valDecryptFailed=true;} }
+    return (det.entries||[]).map(e=>{const m=values&&values[e.id];return m?Object.assign({},e,m):e;});
+  }
+  // envelope encryption: random Kd/Kv are wrapped under a passphrase-derived key, per tier
+  function importRaw(b64key){return crypto.subtle.importKey("raw",unb64(b64key),{name:"AES-GCM"},false,["encrypt","decrypt"]);}
+  async function deriveWrapKey(pass,saltBytes){const base=await crypto.subtle.importKey("raw",TE.encode(pass),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt:saltBytes,iterations:CONFIG.PBKDF2_ITERS,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
+  async function wrapBundle(pass,obj){const salt=crypto.getRandomValues(new Uint8Array(16));const Wk=await deriveWrapKey(pass,salt);const e=await encryptObj(Wk,obj);return{salt:b64(salt),iv:e.iv,ct:e.ct};}
+  async function unwrapBundle(pass,bundle){const Wk=await deriveWrapKey(pass,unb64(bundle.salt));return decryptObj(Wk,bundle.iv,bundle.ct);}
+
+  // ---------- API ----------
+  async function api(path,method,body){
+    const r=await fetch(CONFIG.API+path,{method:method||"GET",headers:{"Content-Type":"application/json","Authorization":"Bearer "+S.idToken},body:body?JSON.stringify(body):undefined});
+    if(r.status===401){toast("Session expired — sign in again");show("signin");throw new Error("401");}
+    if(!r.ok){let e={};try{e=await r.json();}catch(x){}throw new Error(e.error||("http_"+r.status));}
+    return r.json();
+  }
+
+  // ---------- Google sign-in ----------
+  window.gisReady=function(){
+    if(!window.google||!google.accounts){$("#gisNote").textContent="Google sign-in failed to load.";return;}
+    if(CONFIG.GOOGLE_CLIENT_ID.indexOf("REPLACE")===0){$("#gisNote").textContent="Set CONFIG.GOOGLE_CLIENT_ID to enable sign-in.";return;}
+    google.accounts.id.initialize({client_id:CONFIG.GOOGLE_CLIENT_ID,callback:onCredential});
+    google.accounts.id.renderButton($("#gbtnGoogle"),{theme:"filled_blue",size:"large",shape:"pill",width:280});
+    $("#gisNote").textContent="We only verify your email. Your family key never reaches Google or the server.";
+  };
+  window.onCredential=async function(resp){
+    S.idToken=resp.credential;
+    try{ await loadMe(); show("home"); }
+    catch(e){ toast("Sign-in failed: "+e.message); }
+  };
+
+  async function loadMe(){
+    const d=await api("/api/me");
+    S.sub=d.user.sub; S.email=d.user.email; S.name=d.user.name||d.user.email;
+    homeFamilies=d.families||[]; homeInvites=d.invites||[];
+    $("#homeEmail").textContent=S.email;
+    $("#homeAv").textContent=initialsOf(S.name); $("#homeAv").style.background=colorFor(S.sub);
+    renderHome();
+  }
+
+  function renderHome(){
+    const inv=homeInvites.map(iv=>`<div class="invcard"><div class="top"><div class="ic2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4zM4 7l8 6 8-6" stroke="#B07A2A" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="nm"><b>${iv.name}</b><span>Invited as ${iv.role}${iv.invitedBy?" · by "+iv.invitedBy:""}</span></div></div>
+        <div class="acts"><button class="btn sm" onclick="acceptInvite('${iv.familyId}')">Accept</button><button class="btn sm ghost" onclick="declineInvite('${iv.familyId}')">Decline</button></div></div>`).join("");
+    const fams=homeFamilies.map(f=>{const rl=f.role==="maintainer"?"maintainer":f.role==="custodian"?"custodian":"view-only";
+      return `<div class="famcard" onclick="askOpen('${f.id}','${(f.name||"").replace(/'/g,"")}','${f.role}')"><div class="row1"><div class="seal" style="background:${colorFor(f.id)}">${(f.name||"F")[0].toUpperCase()}</div>
+        <div class="nm"><b>${f.name}</b><span>${f.members.length} member${f.members.length!==1?"s":""} · you're ${rl}</span></div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8"/></svg>Locked</div></div></div>`;}).join("");
+    $("#homeBody").innerHTML=(inv?`<div class="eyebrow" style="margin-top:14px">Invitations</div>${inv}`:"")+
+      `<div class="eyebrow" style="margin-top:18px">Families</div>${fams||'<div class="empty" style="padding:26px 10px"><b>No families yet</b>Create one, or wait for an invite.</div>'}`+
+      `<button class="addfam" onclick="show('create');resetCreate()">+ Create a family</button>`;
+  }
+
+  window.acceptInvite=async function(fid){try{await api("/api/families/"+fid+"/accept","POST");toast("Joined");await loadMe();}catch(e){toast("Couldn't join: "+e.message);}};
+  window.declineInvite=async function(fid){try{await api("/api/families/"+fid+"/decline","POST");await loadMe();}catch(e){toast(e.message);}};
+
+  // ---------- create ----------
+  window.resetCreate=function(){$("#cName").value="";$("#cFull").value="";$("#cCust").value="";$("#cKeyHelp").textContent="";$("#cBtn").disabled=true;};
+  window.cValidate=function(){const n=$("#cName").value.trim(),fk=$("#cFull").value,ck=$("#cCust").value,h=$("#cKeyHelp");const ok=n&&fk.length>=4&&ck.length>=4&&fk!==ck;if(fk&&ck&&fk===ck){h.className="help warn";h.textContent="Family and custodian keys must be different.";}else if((fk&&fk.length<4)||(ck&&ck.length<4)){h.className="help";h.textContent="Each key needs at least 4 characters.";}else if(ok){h.className="help";h.style.color="var(--up)";h.textContent="✓ Looks good — remember both exactly.";}else h.textContent="";$("#cBtn").disabled=!ok;};
+  window.createFamily=async function(){
+    const name=$("#cName").value.trim(),fullPass=$("#cFull").value,custPass=$("#cCust").value;
+    try{
+      const KdRaw=crypto.getRandomValues(new Uint8Array(32)), KvRaw=crypto.getRandomValues(new Uint8Array(32));
+      const full=await wrapBundle(fullPass,{kd:b64(KdRaw),kv:b64(KvRaw)});
+      const custodian=await wrapBundle(custPass,{kd:b64(KdRaw)});
+      const f=await api("/api/families","POST",{name,roleBundles:{full,custodian}});
+      S.detKey=await importRaw(b64(KdRaw)); S.valKey=await importRaw(b64(KvRaw));
+      S.familyId=f.id;S.familyName=f.name;S.myRole="maintainer";decryptFailed=false;valDecryptFailed=false;owners.clear();myEntries=[];
+      S.members=f.members||[]; S.myVer=Number(localStorage.getItem("tijori:ver:"+f.id+":"+S.sub)||0);
+      finishOpen();
+    }catch(e){ toast("Create failed: "+e.message); }
+  };
+
+  // ---------- open / unlock ----------
+  window.askOpen=function(fid,name,roleHint){pendingFam={id:fid,name,role:roleHint};
+    $("#uName").textContent="Open "+name;
+    $("#uSeal").innerHTML=`<div style="width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:20px;background:${colorFor(fid)}">${(name||"F")[0].toUpperCase()}</div>`;
+    $("#uSeal").style.background="transparent";$("#uSeal").style.border="none";
+    const cust=roleHint==="custodian";
+    $("#uFields").innerHTML=`<div class="field"><label>${cust?"Custodian key":"Family key"}</label><input id="uKey" type="password" placeholder="${cust?"Custodian passphrase — details only":"Family passphrase — unlocks everything"}" onkeydown="if(event.key==='Enter')doUnlock()"></div>`;
+    $("#uHelp").textContent="";show("unlock");setTimeout(()=>{const x=$("#uKey");if(x)x.focus();},120);};
+  window.doUnlock=async function(){const pass=$("#uKey").value;if(!pass)return;
+    try{await openExisting(pendingFam.id,pendingFam.name,pendingFam.role,pass);}
+    catch(e){$("#uHelp").className="help warn";$("#uHelp").textContent="Couldn't open: "+(e.message==="wrong_key"?"wrong key":e.message);}};
+
+  async function decodeAll(objs){
+    for(const sub of Object.keys(objs)){const o=objs[sub];try{const entries=await decodeObject(o.ciphertext);owners.set(sub,{v:o.v,entries,name:o.name,email:o.email,role:o.role});if(sub===S.sub){myEntries=entries;S.myVer=Math.max(S.myVer,o.v);}}catch(e){decryptFailed=true;}}
+  }
+  function finishOpen(){
+    if(decryptFailed)toast("Couldn't read details — check the key");
+    else if(S.valKey&&valDecryptFailed)toast("Amounts hidden — values key didn't match");
+    curTab="overview";filter="all";rebuild();show("app");renderApp();connectWS();
+    if(S.myRole==="maintainer"&&S.valKey&&!owners.has(S.sub))publishMine();
+  }
+  async function openExisting(fid,name,role,pass){
+    S.familyId=fid;S.familyName=name||"Family";decryptFailed=false;valDecryptFailed=false;owners.clear();myEntries=[];
+    const d=await api("/api/families/"+fid+"/objects");
+    S.members=d.family.members; S.myRole=d.family.role||role||"viewer";
+    const tier=S.myRole==="custodian"?"custodian":"full";
+    const bundle=(d.roleBundles||{})[tier];
+    if(!bundle)throw new Error("no key set for this role yet");
+    let raw; try{raw=await unwrapBundle(pass,bundle);}catch(e){throw new Error("wrong_key");}
+    S.detKey=await importRaw(raw.kd);
+    S.valKey=raw.kv?await importRaw(raw.kv):null;
+    S.myVer=Number(localStorage.getItem("tijori:ver:"+fid+":"+S.sub)||0);
+    await decodeAll(d.objects||{});
+    finishOpen();
+  }
+
+  function rebuild(){
+    const members=(S.members||[]).map(m=>({id:m.sub,name:m.name||m.email||"Member",email:m.email||"",role:m.role||"viewer",initials:initialsOf(m.name||m.email||"?"),color:colorFor(m.sub),you:m.sub===S.sub}));
+    if(!members.some(m=>m.you))members.unshift({id:S.sub,name:S.name,email:S.email,role:S.myRole,initials:initialsOf(S.name),color:colorFor(S.sub),you:true});
+    const entries=[];
+    myEntries.forEach(e=>{const c=Object.assign({},e,{owner:S.sub});if(!c.id)c.id=S.sub+":"+Math.random().toString(36).slice(2);entries.push(c);});
+    owners.forEach((o,g)=>{if(g===S.sub)return;(o.entries||[]).forEach(e=>{const c=Object.assign({},e,{owner:g});if(!c.id)c.id=g+":"+Math.random().toString(36).slice(2);entries.push(c);});});
+    LIVE={id:S.familyId,name:S.familyName,color:colorFor(S.familyId),seal:(S.familyName||"F")[0].toUpperCase(),members,entries,role:S.myRole};
+  }
+
+  // ---------- WS ----------
+  let connState="connecting";
+  function setConn(s){connState=s;const d=$("#connDot"),t=$("#connTxt");if(!d)return;const map={online:["var(--up)","live"],connecting:["var(--accent)","connecting…"],offline:["#C0492F","offline"],error:["#C0492F","error"]};const m=map[s]||map.connecting;d.style.background=m[0];if(t)t.textContent=m[1];}
+  function connectWS(){
+    if(S.ws){try{S.ws.close();}catch(e){}}
+    setConn("connecting");
+    let ws;try{ws=new WebSocket(CONFIG.WS);}catch(e){setConn("error");return;}
+    S.ws=ws;
+    ws.onopen=()=>ws.send(JSON.stringify({type:"auth",token:S.idToken}));
+    ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data);}catch(e){return;}onWS(m);};
+    ws.onclose=()=>setConn("offline");
+    ws.onerror=()=>setConn("error");
+  }
+  function onWS(m){
+    if(m.type==="ready"){setConn("online");return;}
+    if(m.type==="auth_error"){setConn("error");return;}
+    if(m.type==="object"){if(m.familyId!==S.familyId)return;applyObject(m.ownerSub,m.v,m.ciphertext,m);return;}
+    if(m.type==="roster"){if(m.familyId!==S.familyId)return;S.members=m.members;const mine=m.members.find(x=>x.sub===S.sub);if(mine)S.myRole=mine.role;rebuild();softRender();return;}
+    if(m.type==="invite"){toast("New family invite — check Families");loadMe().catch(()=>{});return;}
+  }
+  async function applyObject(sub,v,ciphertext,info){
+    const localV=owners.has(sub)?owners.get(sub).v:-1;
+    if(typeof v!=="number"||v<=localV)return; // VERSION CHECK
+    try{const entries=await decodeObject(ciphertext);
+      owners.set(sub,{v,entries,name:info&&info.name,email:info&&info.email,role:info&&info.role});
+      if(sub===S.sub){myEntries=entries;S.myVer=Math.max(S.myVer,v);}
+      rebuild();softRender();
+    }catch(e){if(!decryptFailed){decryptFailed=true;toast("Couldn't read an update — check the details key");}}
+  }
+
+  async function publishMine(){
+    if(S.myRole!=="maintainer")return;
+    if(!S.detKey||!S.valKey){toast("Need both keys to publish");return;}
+    S.myVer=(S.myVer||0)+1;
+    const det=await encryptObj(S.detKey,{entries:myEntries.map(stripMoney),updatedAt:Date.now()});
+    const vmap={};myEntries.forEach(e=>{vmap[e.id]=pickMoney(e);});
+    const val=await encryptObj(S.valKey,{values:vmap});
+    try{ await api("/api/families/"+S.familyId+"/object","PUT",{v:S.myVer,ciphertext:{d:det,v:val}});
+      owners.set(S.sub,{v:S.myVer,entries:myEntries.slice(),name:S.name,email:S.email,role:"maintainer"});
+      localStorage.setItem("tijori:ver:"+S.familyId+":"+S.sub,String(S.myVer));rebuild();
+    }catch(e){ S.myVer--; if(String(e.message)==="stale"){toast("A newer version exists — reopen the family");} else toast("Publish failed: "+e.message); }
+  }
+
+  // ---------- app shell ----------
+  function renderApp(){
+    const f=cur(),r=role(),rc=r==="maintainer"?["maint","Maintainer"]:r==="custodian"?["cust","Custodian"]:["view","View only"];
+    $("#appHead").innerHTML=`<div class="seal" style="background:${f.color}">${f.seal}</div>
+      <div class="htxt"><div class="fam"><span id="connDot" style="width:8px;height:8px;border-radius:50%;background:var(--faint);display:inline-block"></span>${f.name}</div><div class="sub"><span id="connTxt">connecting…</span> · ${f.members.length} member${f.members.length!==1?"s":""}</div></div>
+      <div class="rolechip ${rc[0]}">${rc[1]}</div>
+      <button class="pf" style="background:${me(f).color}" onclick="renderProfile()">${me(f).initials}</button>`;
+    setConn(connState);renderTabbar();renderBody();
+  }
+  function renderTabbar(){
+    const isMaint=canEdit();
+    const I={overview:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm0 7h7v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z" fill="currentColor"/></svg>',holdings:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',insights:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 19V10M12 19V5M19 19v-6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',members:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.7"/></svg>'};
+    const tab=(k,l)=>`<button class="tab ${curTab===k?"on":""}" onclick="goApp('${k}')">${I[k]}<span>${l}</span></button>`;
+    let h=tab("overview","Overview")+tab("holdings","Holdings");
+    if(isMaint)h+=`<button class="fab" onclick="startAdd()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></button>`;
+    h+=tab("insights","Insights")+tab("members","Members");$("#tabbar").innerHTML=h;
+  }
+  window.goApp=function(t){curTab=t;show("app");renderTabbar();renderBody();};
+  function renderBody(){const f=cur();if(!f)return;if(curTab==="overview")renderOverview(f);else if(curTab==="holdings")renderHoldings(f);else if(curTab==="insights")renderInsights(f);else renderMembers(f);}
+  function softRender(){setConn(connState);if($("#app").classList.contains("active"))renderApp();}
+
+  function holdCard(f,e){const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";let val;
+    if(!showAmt())val=`<div class="v mask">•••</div>`;
+    else if(liab)val=`<div class="v neg">− ${inrC(e.value||0)}</div>`;
+    else if(e.type==="insurance"){const hv=(e.value||0)>0;val=`<div class="v" style="font-size:13px;color:var(--insurance)">${inrC(hv?e.value:(e.cover||0))}<div style="font-size:9px;color:var(--faint);font-weight:600;letter-spacing:.04em;margin-top:2px">${hv?"VALUE":"COVER"}</div></div>`;}
+    else val=`<div class="v">${inrC(e.value||0)}</div>`;
+    return `<div class="hold" onclick="openDetail('${e.id}')"><div class="ic" style="background:${tint(M.color)}">${M.icon}</div>
+      <div class="mid"><div class="t">${entryTitle(e)} <span class="keychip">${e.type==="property"?"📍":""}${e.key}</span></div>
+      <div class="s"><span>${M.label}</span> · <span class="by"><span class="av" style="width:16px;height:16px;font-size:8px;border:none;background:${owner.color}">${owner.initials}</span>${mine?"You":owner.name.split(" ")[0]}</span></div></div>
+      <div class="rt">${val}${mine&&!liab&&e.type!=="insurance"?'<div class="you">you maintain</div>':""}</div></div>`;}
+
+  function renderOverview(f){
+    const nw=netWorth(f);
+    const segs=f.members.map(m=>({m,v:showAmt()?memberAssets(f,m.id):memberCount(f,m.id)})).filter(s=>s.v>0);
+    const tot=segs.reduce((s,x)=>s+x.v,0)||1;
+    const bar=segs.map(s=>`<div class="seg" style="width:${s.v/tot*100}%;background:${s.m.color}"></div>`).join("");
+    const legend=segs.map(s=>`<div class="lg"><span class="av" style="background:${s.m.color}">${s.m.initials}</span><div><b>${s.m.you?"You":s.m.name.split(" ")[0]}</b> <span>· ${showAmt()?inrC(s.v)+" · "+Math.round(s.v/tot*100)+"%":s.v+" item"+(s.v!==1?"s":"")}</span></div></div>`).join("");
+    const byType={};valued(f).forEach(e=>{byType[e.type]=(byType[e.type]||0)+e.value;});
+    const allocRows=Object.keys(TYPES).filter(t=>byType[t]).map(t=>{const cnt=valued(f).filter(e=>e.type===t).length;return `<div class="ar"><span class="dot" style="background:${TYPES[t].color}"></span><span class="nm">${TYPES[t].label.split(" · ")[0]}<span class="ct"> · ${cnt}</span></span><span class="v">${amt(byType[t],true)}</span></div>`;}).join("");
+    const block=showAmt()
+      ?`<div class="nw"><div class="lbl"><span>Net worth</span><span class="eyebrow">assets − liabilities</span></div><div class="big">${inr(nw)}</div><div class="albits"><span>Assets <b>${inrC(assetsTotal(f))}</b></span><span class="neg">Liabilities <b>− ${inrC(liabTotal(f)).replace("− ","")}</b></span></div><div class="contrib"><div class="eyebrow" style="margin-bottom:9px">Who holds what</div><div class="track">${bar}</div><div class="legend">${legend}</div></div></div>`
+      :`<div class="nw"><div class="lbl"><span>Custodian view</span><span class="eyebrow">amounts hidden</span></div><div class="big" style="font-size:22px;color:var(--ink2)">${valued(f).length} holdings · ${liabEntries(f).length} liabilities</div><div class="contrib"><div class="eyebrow" style="margin-bottom:9px">Holdings by member</div><div class="track">${bar}</div><div class="legend">${legend}</div></div></div>`;
+    $("#appBody").innerHTML=`${block}<div class="sectitle"><h3>By type</h3></div><div class="alloc">${allocRows||'<div class="ar"><span class="nm" style="color:var(--muted)">No holdings yet</span></div>'}</div>
+      <div class="sectitle"><h3>Recent</h3><a onclick="goApp('holdings')">See all</a></div>${f.entries.slice(0,3).map(e=>holdCard(f,e)).join("")||'<div class="empty"><b>Nothing here yet</b>Maintainers add accounts with +.</div>'}<div style="height:14px"></div>`;
+  }
+  function renderHoldings(f){
+    const chips=[["all","All"],...GROUPS.filter(g=>f.entries.some(e=>meta(e).grp===g)).map(g=>["g:"+g,g]),...f.members.map(m=>["m:"+m.id,m.you?"You":m.name.split(" ")[0]])];
+    const chipHtml=chips.map(c=>`<button class="chip ${filter===c[0]?"on":""}" onclick="setFilter('${c[0]}')">${c[1]}</button>`).join("");
+    let list=f.entries.slice();if(filter.indexOf("g:")===0)list=list.filter(e=>meta(e).grp===filter.slice(2));if(filter.indexOf("m:")===0)list=list.filter(e=>e.owner===filter.slice(2));
+    const aShown=list.filter(e=>e.kind==="asset"&&(e.type!=="insurance"||(e.value||0)>0)).reduce((s,e)=>s+e.value,0);
+    const lShown=list.filter(e=>e.kind==="liab").reduce((s,e)=>s+e.value,0);
+    const summ=showAmt()?`${list.length} · ${inrC(aShown-lShown)}`:`${list.length} items`;
+    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Holdings</h3><span class="eyebrow">${summ}</span></div><div class="chips">${chipHtml}</div>${list.length?list.map(e=>holdCard(f,e)).join(""):'<div class="empty"><b>Nothing matches</b>No entries for this filter.</div>'}<div style="height:14px"></div>`;
+  }
+  window.setFilter=function(v){filter=v;renderHoldings(cur());};
+  function splitBlock(title,cap,parts){const tot=parts.reduce((s,p)=>s+p.val,0)||1;const track=parts.filter(p=>p.val>0).map(p=>`<div class="seg" style="width:${p.val/tot*100}%;background:${p.color}"></div>`).join("");const leg=parts.map(p=>`<div class="lr"><span class="d" style="background:${p.color}"></span><span class="nm">${p.name}</span><span class="vv">${showAmt()?inrC(p.val):p.val}</span><span class="pp">${Math.round(p.val/tot*100)}%</span></div>`).join("");return `<div class="split"><h4>${title}</h4><div class="cap">${cap}</div><div class="track">${track}</div><div class="legend">${leg}</div></div>`;}
+  function insBlock(life,medical,isCount){const fmtv=v=>isCount?(v+" "+(v===1?"policy":"policies")):(v?inrC(v):"—");const card=(lab,val,c)=>`<div style="flex:1;background:${c};border:1px solid var(--line);border-radius:12px;padding:13px 14px"><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${lab}</div><div style="font-family:var(--serif);font-weight:600;font-size:18px;margin-top:5px;font-variant-numeric:tabular-nums">${val}</div></div>`;return `<div class="split"><h4>Insurance cover</h4><div class="cap">Life and medical cover — protection, separate from net worth</div><div style="display:flex;gap:10px;margin-top:4px">${card("Life cover",fmtv(life),"#E8F1ED")}${card("Medical cover",fmtv(medical),"#F0EBF6")}</div></div>`;}
+  function renderInsights(f){
+    const hasIns=insEntries(f).length>0;
+    if(!showAmt()){const nc=natureCounts(f),icn=insCounts(f);$("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">by count</span></div><div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>Amounts hidden in your custodian view — shown by count.</span></div>${splitBlock("Financial vs physical","Holdings of each nature",[{name:"Financial",val:nc.financial,color:"var(--bank)"},{name:"Physical",val:nc.physical,color:"var(--property)"}])}${hasIns?insBlock(icn.life,icn.medical,true):""}<div style="height:14px"></div>`;return;}
+    const nt=natureTotals(f),lt=liqTotals(f),rt=riskTotals(f),nw=netWorth(f),ic=insCover(f);
+    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">net worth ${inrC(nw)}</span></div>
+      ${splitBlock("Financial vs physical","Life-policy investment value counts as financial; cover doesn't",[{name:"Financial assets",val:nt.financial,color:"var(--bank)"},{name:"Physical assets",val:nt.physical,color:"var(--property)"}])}
+      ${splitBlock("Liquid vs illiquid","What you could access quickly",[{name:"Liquid",val:lt.liquid,color:"var(--fd)"},{name:"Illiquid",val:lt.illiquid,color:"var(--locker)"}])}
+      ${splitBlock("Risk profile","Equity & equity funds = high risk",[{name:"High risk",val:rt.high,color:"var(--trading)"},{name:"Low risk",val:rt.low,color:"var(--fd)"}])}
+      <div class="split"><h4>Liabilities</h4><div class="cap">Subtracted from assets to get net worth</div><div class="legend"><div class="lr"><span class="d" style="background:var(--down)"></span><span class="nm">Total owed</span><span class="vv" style="color:var(--down)">− ${inrC(liabTotal(f)).replace("− ","")}</span></div><div class="lr"><span class="d" style="background:var(--up)"></span><span class="nm">Net worth</span><span class="vv">${inrC(nw)}</span></div></div></div>
+      ${hasIns?insBlock(ic.life,ic.medical,false):""}<div style="height:14px"></div>`;
+  }
+  function renderMembers(f){
+    const rc=r=>r==="maintainer"?["maint","Maintainer"]:r==="custodian"?["cust","Custodian"]:["view","View only"];
+    const cards=f.members.map(m=>{const c=memberCount(f,m.id),tag=rc(m.role);const ml=showAmt()?`${c} entr${c!==1?"ies":"y"} · ${inrC(memberAssets(f,m.id))}`:`${c} entr${c!==1?"ies":"y"}`;return `<div class="mcard"><div class="av" style="background:${m.color}">${m.initials}</div><div class="mid"><b>${m.you?"You":m.name} ${m.you?'<span class="youtag">YOU</span>':""}</b><div class="em">${m.email||"—"}</div><div class="meta">${ml}</div></div><div class="rolechip ${tag[0]}">${tag[1]}</div></div>`;}).join("");
+    const pend=(LIVE._pending||[]).map(p=>`<div class="mcard pend"><div class="av" style="background:#B7C0C4">@</div><div class="mid"><b>${p.email}</b><div class="meta">Invited as ${p.role} · pending</div></div><div class="rolechip view">Invited</div></div>`).join("");
+    const invite=canEdit()?`<div class="invite"><div class="eyebrow">Invite a member</div>
+      <div class="field"><label>Their Google email</label><input id="invEmail" placeholder="name@gmail.com"></div>
+      <div class="field"><label>Role</label><div class="seg" id="invSeg"><button class="on" data-r="maintainer" onclick="invRoleSet(this)">Maintainer</button><button data-r="viewer" onclick="invRoleSet(this)">View only</button><button data-r="custodian" onclick="invRoleSet(this)">Custodian</button></div></div>
+      <button class="btn" onclick="sendInvite()">Send invite</button>
+      <div class="note" style="margin-top:12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>They'll see the invite when they sign in. Give them the right key separately: the <b>family key</b> for a maintainer or viewer, the <b>custodian key</b> for a custodian.</span></div></div>`
+      :`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>Only maintainers can invite members.</span></div>`;
+    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Members</h3><span class="eyebrow">${f.members.length}</span></div>${cards}${pend}${invite}<div style="height:14px"></div>`;
+  }
+  window.invRoleSet=function(b){invRole=b.dataset.r;document.querySelectorAll("#invSeg button").forEach(x=>x.classList.toggle("on",x===b));};
+  window.sendInvite=async function(){const email=($("#invEmail").value||"").trim();if(!email){toast("Enter a Google email");return;}try{await api("/api/families/"+S.familyId+"/invite","POST",{email,role:invRole});toast("Invite sent to "+email);$("#invEmail").value="";await refreshFamily();}catch(e){toast(e.message==="already_member"?"Already a member":"Invite failed: "+e.message);}};
+  async function refreshFamily(){try{const d=await api("/api/families/"+S.familyId+"/objects");S.members=d.family.members;LIVE&&(LIVE._pending=d.family.pendingInvites||[]);rebuild();if(LIVE)LIVE._pending=d.family.pendingInvites||[];softRender();}catch(e){}}
+
+  // ---------- add ----------
+  window.startAdd=function(){$("#typeGroups").innerHTML=GROUPS.map(g=>{const dict=g==="Liabilities"?LIAB:TYPES;const items=Object.keys(dict).filter(k=>dict[k].grp===g).map(k=>{const M=dict[k];return `<button class="typecard" onclick="pickType('${k}','${g==="Liabilities"?"liab":"asset"}')"><div class="ic" style="background:${tint(M.color)}">${M.icon}</div><b>${M.label.split(" · ")[0]}</b><span>${M.keyLabel}</span></button>`;}).join("");return `<div class="grouphdr">${g}</div><div class="typegrid">${items}</div>`;}).join("");show("addType");};
+  window.pickType=function(t,kind){addingType=t;addKind=kind;draft={};const M=kind==="liab"?LIAB[t]:TYPES[t];$("#formTitle").textContent="New "+M.label.split(" · ")[0].toLowerCase();$("#formCap").textContent="The "+M.keyLabel.toLowerCase()+" must be unique in this family.";$("#formFields").innerHTML=M.fields.map(([k,label,kind2])=>{const isKey=kind2==="key",opt=kind2==="opt";return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${opt?"optional":""}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp">Stops two members tracking the same account.</span>':""}</div>`;}).join("");$("#saveBtn").disabled=true;show("addForm");};
+  window.onField=function(el){const k=el.getAttribute("data-k"),kind=el.getAttribute("data-kind");draft[k]=kind==="money"?(Number(el.value.replace(/[^0-9]/g,""))||0):el.value.trim();if(kind==="key")checkKey(el.value.trim());validate();};
+  function checkKey(val){const h=$("#keyHelp");if(!h)return;const f=cur();if(!val){h.className="help";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
+  function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(([k,_l,kind])=>{if(kind==="opt")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
+  window.saveEntry=async function(){const e={kind:addKind,type:addingType,id:S.sub+":"+crypto.randomUUID()};(addKind==="liab"?LIAB[addingType]:TYPES[addingType]).fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;myEntries.unshift(e);await publishMine();goApp("holdings");filter="all";renderHoldings(cur());toast("Added & published");};
+
+  window.openDetail=function(id){const f=cur();const e=f.entries.find(x=>x.id===id);if(!e)return;const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";const rows=[];
+    if(e.sub)rows.push(["Kind",e.sub]);
+    if(e.label&&e.type!=="property")rows.push([(e.type==="trading"||e.type==="mf"||e.type==="insurance")?"Provider":(e.type==="loan"||e.type==="creditcard")?"Issuer":"Bank",e.label]);
+    if(e.branch)rows.push(["Branch",e.branch]);if(e.purpose)rows.push(["Purpose",e.purpose]);
+    rows.push([M.keyLabel+" (key)",e.key]);if(e.demat)rows.push(["Demat account",e.demat]);if(e.weight)rows.push(["Weight",e.weight]);if(e.nominee)rows.push(["Nominee",e.nominee]);
+    if(e.papers)rows.push([e.type==="locker"?"Key / papers":"Location of papers",e.papers]);
+    if(e.limit!==undefined)rows.push(["Credit limit",showAmt()?inr(e.limit):"•••"]);if(e.cover!==undefined)rows.push(["Sum assured",showAmt()?inr(e.cover):"•••"]);
+    rows.push([liab?"Outstanding":(e.type==="property"?"Market value":(e.type==="insurance"?"Market / terminal value":"Value")),showAmt()?`<span class="${liab?"neg":""}">${liab?"− ":""}${inr(e.value||0)}</span>`:`<span class="mask">•••</span>`]);
+    rows.push(["Maintained by",mine?"You":owner.name]);
+    $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${M.icon}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
+      <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
+      ${mine&&canEdit()?`<button class="btn" style="margin-top:16px;background:var(--down)" onclick="deleteEntry('${id}')">Delete entry</button>`:`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>${mine?"Read-only role here.":"Maintained by "+owner.name.split(" ")[0]+"."}</span></div>`}
+      <button class="btn ghost" style="margin-top:10px" onclick="show('app')">Back</button>`;show("detail");};
+  window.deleteEntry=async function(id){myEntries=myEntries.filter(x=>x.id!==id);await publishMine();show("app");goApp("holdings");toast("Deleted & published");};
+
+  window.renderProfile=function(){const inFam=!!S.familyId;
+    $("#profileBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>You</h3></div>
+      <div class="mcard"><div class="av" style="background:${colorFor(S.sub)}">${initialsOf(S.name)}</div><div class="mid"><b>${S.name}</b><div class="em">${S.email}</div>${inFam?`<div class="meta">${S.familyName} · ${S.myRole}</div>`:""}</div></div>
+      <div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>Membership is enforced by the server; the data is encrypted with your family key, which the server never sees.</span></div>
+      ${inFam?`<button class="btn ghost" style="margin-top:16px" onclick="leaveFamily()">Close family</button>`:""}
+      <button class="btn ghost" style="margin-top:10px" onclick="signOut()">Sign out</button><div style="height:18px"></div>`;
+    show("profile");};
+  window.leaveFamily=function(){if(S.ws){try{S.ws.close();}catch(e){}}S.ws=null;S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];loadMe().then(()=>show("home")).catch(()=>show("home"));};
+  window.signOut=function(){if(S.ws){try{S.ws.close();}catch(e){}}try{google.accounts.id.disableAutoSelect();}catch(e){}S.idToken="";S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];show("signin");};
+
+  function tick(){const d=new Date();let h=d.getHours()%12||12,m=d.getMinutes();$("#clock").textContent=h+":"+(m<10?"0":"")+m;}
+  tick();setInterval(tick,30000);
+})();
+</script>
+</body>
+</html>
