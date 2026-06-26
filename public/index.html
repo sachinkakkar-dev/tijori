@@ -252,7 +252,7 @@
   </section>
 
   <section class="screen" id="addForm">
-    <div class="topback"><button onclick="show('addType')">‹ Back</button></div>
+    <div class="topback"><button onclick="cancelForm()">‹ Back</button></div>
     <div class="pad" style="padding-bottom:30px"><h1 class="h-title" id="formTitle">New entry</h1><p class="h-cap" id="formCap"></p><div id="formFields" style="margin-top:14px"></div><button class="btn" id="saveBtn" disabled onclick="saveEntry()">Save &amp; publish</button></div>
   </section>
 
@@ -282,7 +282,7 @@
   // ==================================================
 
   const TYPES={
-    bank:{label:"Bank account",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
+    bank:{label:"Bank account",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["acname","Account name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
     fd:{label:"Fixed deposit",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"]]},
     trading:{label:"Trading / equity",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📈",color:"var(--trading)",keyLabel:"Account number",fields:[["label","Provider","text"],["key","Account number","key"],["demat","Demat account (optional)","opt"],["value","Value","money"]]},
     mf:{label:"Mutual fund",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📊",color:"var(--mf)",keyLabel:"A/C / Folio no.",fields:[["label","Provider / AMC","text"],["key","A/C no. / Folio no.","key"],["value","Value","money"]]},
@@ -305,7 +305,7 @@
   const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[]};
   const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
   let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
-  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="viewer";
+  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="viewer", editingId=null;
   let homeFamilies=[], homeInvites=[];
 
   const $=s=>document.querySelector(s);
@@ -562,7 +562,7 @@
     else val=`<div class="v">${inrC(e.value||0)}</div>`;
     return `<div class="hold" onclick="openDetail('${e.id}')"><div class="ic" style="background:${tint(M.color)}">${M.icon}</div>
       <div class="mid"><div class="t">${entryTitle(e)} <span class="keychip">${e.type==="property"?"📍":""}${e.key}</span></div>
-      <div class="s"><span>${M.label}</span> · <span class="by"><span class="av" style="width:16px;height:16px;font-size:8px;border:none;background:${owner.color}">${owner.initials}</span>${mine?"You":owner.name.split(" ")[0]}</span></div></div>
+      <div class="s"><span>${(e.type==="bank"&&e.acname)?e.acname:M.label}</span> · <span class="by"><span class="av" style="width:16px;height:16px;font-size:8px;border:none;background:${owner.color}">${owner.initials}</span>${mine?"You":owner.name.split(" ")[0]}</span></div></div>
       <div class="rt">${val}${mine&&!liab&&e.type!=="insurance"?'<div class="you">you maintain</div>':""}</div></div>`;}
 
   function renderOverview(f){
@@ -580,7 +580,7 @@
       <div class="sectitle"><h3>Recent</h3><a onclick="goApp('holdings')">See all</a></div>${f.entries.slice(0,3).map(e=>holdCard(f,e)).join("")||'<div class="empty"><b>Nothing here yet</b>Maintainers add accounts with +.</div>'}<div style="height:14px"></div>`;
   }
   function renderHoldings(f){
-    const chips=[["all","All"],...GROUPS.filter(g=>f.entries.some(e=>meta(e).grp===g)).map(g=>["g:"+g,g]),...f.members.map(m=>["m:"+m.id,m.you?"You":m.name.split(" ")[0]])];
+    const chips=[["all","All"],...GROUPS.filter(g=>f.entries.some(e=>meta(e).grp===g)).map(g=>["g:"+g,g]),...f.members.filter(m=>m.role!=="custodian"&&memberCount(f,m.id)>0).map(m=>["m:"+m.id,m.you?"You":m.name.split(" ")[0]])];
     const chipHtml=chips.map(c=>`<button class="chip ${filter===c[0]?"on":""}" onclick="setFilter('${c[0]}')">${c[1]}</button>`).join("");
     let list=f.entries.slice();if(filter.indexOf("g:")===0)list=list.filter(e=>meta(e).grp===filter.slice(2));if(filter.indexOf("m:")===0)list=list.filter(e=>e.owner===filter.slice(2));
     const aShown=list.filter(e=>e.kind==="asset"&&(e.type!=="insurance"||(e.value||0)>0)).reduce((s,e)=>s+e.value,0);
@@ -619,16 +619,28 @@
   async function refreshFamily(){try{const d=await api("/api/families/"+S.familyId+"/objects");S.members=d.family.members;LIVE&&(LIVE._pending=d.family.pendingInvites||[]);rebuild();if(LIVE)LIVE._pending=d.family.pendingInvites||[];softRender();}catch(e){}}
 
   // ---------- add ----------
+  function buildForm(){
+    const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];
+    $("#formTitle").textContent=(editingId?"Edit ":"New ")+M.label.split(" · ")[0].toLowerCase();
+    $("#formCap").textContent="The "+M.keyLabel.toLowerCase()+" must be unique in this family.";
+    $("#formFields").innerHTML=M.fields.map(([k,label,kind2])=>{const isKey=kind2==="key",opt=kind2==="opt";let v=draft[k];v=(v===undefined||v===null)?"":v;const val=String(v).replace(/"/g,"&quot;");return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${opt?"optional":""}" value="${val}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp"></span>':""}</div>`;}).join("");
+    $("#saveBtn").textContent=editingId?"Save changes":"Save & publish";
+    const kf=M.fields.find(ff=>ff[2]==="key"); if(kf)checkKey(draft[kf[0]]||"");
+    validate();
+  }
   window.startAdd=function(){$("#typeGroups").innerHTML=GROUPS.map(g=>{const dict=g==="Liabilities"?LIAB:TYPES;const items=Object.keys(dict).filter(k=>dict[k].grp===g).map(k=>{const M=dict[k];return `<button class="typecard" onclick="pickType('${k}','${g==="Liabilities"?"liab":"asset"}')"><div class="ic" style="background:${tint(M.color)}">${M.icon}</div><b>${M.label.split(" · ")[0]}</b><span>${M.keyLabel}</span></button>`;}).join("");return `<div class="grouphdr">${g}</div><div class="typegrid">${items}</div>`;}).join("");show("addType");};
-  window.pickType=function(t,kind){addingType=t;addKind=kind;draft={};const M=kind==="liab"?LIAB[t]:TYPES[t];$("#formTitle").textContent="New "+M.label.split(" · ")[0].toLowerCase();$("#formCap").textContent="The "+M.keyLabel.toLowerCase()+" must be unique in this family.";$("#formFields").innerHTML=M.fields.map(([k,label,kind2])=>{const isKey=kind2==="key",opt=kind2==="opt";return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${opt?"optional":""}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp">Stops two members tracking the same account.</span>':""}</div>`;}).join("");$("#saveBtn").disabled=true;show("addForm");};
+  window.pickType=function(t,kind){addingType=t;addKind=kind;editingId=null;draft={};buildForm();show("addForm");};
+  window.startEdit=function(id){const e=(myEntries||[]).find(x=>x.id===id);if(!e){toast("You can only edit your own entries");return;}addingType=e.type;addKind=e.kind;editingId=id;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];draft={};M.fields.forEach(([k])=>{if(e[k]!==undefined)draft[k]=e[k];});draft._k=true;buildForm();show("addForm");};
+  window.cancelForm=function(){const wasEdit=!!editingId;editingId=null;if(wasEdit)show("detail");else show("addType");};
   window.onField=function(el){const k=el.getAttribute("data-k"),kind=el.getAttribute("data-kind");draft[k]=kind==="money"?(Number(el.value.replace(/[^0-9]/g,""))||0):el.value.trim();if(kind==="key")checkKey(el.value.trim());validate();};
-  function checkKey(val){const h=$("#keyHelp");if(!h)return;const f=cur();if(!val){h.className="help";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
+  function checkKey(val){const h=$("#keyHelp");if(!h)return;val=(val||"").trim();const f=cur();if(!val){h.className="help";h.style.color="";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>e.id!==editingId&&(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.style.color="";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
   function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(([k,_l,kind])=>{if(kind==="opt")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
-  window.saveEntry=async function(){const e={kind:addKind,type:addingType,id:S.sub+":"+crypto.randomUUID()};(addKind==="liab"?LIAB[addingType]:TYPES[addingType]).fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;myEntries.unshift(e);await publishMine();goApp("holdings");filter="all";renderHoldings(cur());toast("Added & published");};
+  window.saveEntry=async function(){const wasEdit=!!editingId;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];const e={kind:addKind,type:addingType,id:editingId||(S.sub+":"+crypto.randomUUID())};M.fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;if(wasEdit){const idx=myEntries.findIndex(x=>x.id===editingId);if(idx>=0)myEntries[idx]=e;else myEntries.unshift(e);}else myEntries.unshift(e);editingId=null;await publishMine();goApp("holdings");filter="all";renderHoldings(cur());toast(wasEdit?"Updated & published":"Added & published");};
 
   window.openDetail=function(id){const f=cur();const e=f.entries.find(x=>x.id===id);if(!e)return;const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";const rows=[];
     if(e.sub)rows.push(["Kind",e.sub]);
     if(e.label&&e.type!=="property")rows.push([(e.type==="trading"||e.type==="mf"||e.type==="insurance")?"Provider":(e.type==="loan"||e.type==="creditcard")?"Issuer":"Bank",e.label]);
+    if(e.acname)rows.push(["Account name",e.acname]);
     if(e.branch)rows.push(["Branch",e.branch]);if(e.purpose)rows.push(["Purpose",e.purpose]);
     rows.push([M.keyLabel+" (key)",e.key]);if(e.demat)rows.push(["Demat account",e.demat]);if(e.weight)rows.push(["Weight",e.weight]);if(e.nominee)rows.push(["Nominee",e.nominee]);
     if(e.papers)rows.push([e.type==="locker"?"Key / papers":"Location of papers",e.papers]);
@@ -637,7 +649,7 @@
     rows.push(["Maintained by",mine?"You":owner.name]);
     $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${M.icon}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
       <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
-      ${mine&&canEdit()?`<button class="btn" style="margin-top:16px;background:var(--down)" onclick="deleteEntry('${id}')">Delete entry</button>`:`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>${mine?"Read-only role here.":"Maintained by "+owner.name.split(" ")[0]+"."}</span></div>`}
+      ${mine&&canEdit()?`<button class="btn" style="margin-top:16px" onclick="startEdit('${id}')">Edit entry</button><button class="btn ghost" style="margin-top:10px;color:var(--down);border-color:#E7C7BF" onclick="deleteEntry('${id}')">Delete entry</button>`:`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>${mine?"Read-only role here.":"Maintained by "+owner.name.split(" ")[0]+"."}</span></div>`}
       <button class="btn ghost" style="margin-top:10px" onclick="show('app')">Back</button>`;show("detail");};
   window.deleteEntry=async function(id){myEntries=myEntries.filter(x=>x.id!==id);await publishMine();show("app");goApp("holdings");toast("Deleted & published");};
 
