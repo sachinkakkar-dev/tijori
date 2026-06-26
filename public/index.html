@@ -335,6 +335,7 @@
   function entryTitle(e){const t=e.type;if(t==="property")return e.key;if(t==="locker")return (e.label||"Locker")+(e.branch?" · "+e.branch:"");if(t==="gold")return "Gold · "+(e.label||"holding");if(t==="loan")return (e.label||"Loan")+(e.purpose?" · "+e.purpose:"");return e.label||meta(e).label;}
 
   function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));const sc=$("#"+id);if(sc)sc.scrollTop=0;}
+  window.show=show;
   function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2400);}
   window.back2=function(){ show(S.familyId?"app":"home"); };
 
