@@ -4,6 +4,13 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Tijori</title>
+<meta name="theme-color" content="#0F3138"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Tijori"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="/icon-180.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -142,6 +149,20 @@
   .mcard .mid .em{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mcard .mid .meta{font-size:11px;color:var(--faint);margin-top:5px}
   .youtag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:6px}
+  .crtag{font-size:10px;font-weight:700;color:#1E4A53;background:#E3EBED;padding:2px 6px;border-radius:6px;margin-left:4px}
+  .rmbtn{flex:none;margin-left:4px;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--down);display:grid;place-items:center;cursor:pointer}
+  .rmbtn:active{background:var(--down-soft)}
+  .btn.danger{background:var(--down);color:#fff}
+  .modalback{position:absolute;inset:0;background:rgba(8,24,28,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:26px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:40}
+  .modalback.show{opacity:1;pointer-events:auto}
+  .modal{background:var(--surface);border-radius:20px;padding:22px 20px 18px;width:100%;max-width:330px;text-align:center;transform:translateY(10px) scale(.98);transition:transform .18s;box-shadow:0 24px 50px -16px rgba(0,0,0,.5)}
+  .modalback.show .modal{transform:none}
+  .modal-ic{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;margin:0 auto 14px;background:var(--accent-soft);color:var(--accent)}
+  .modal-ic.danger{background:var(--down-soft);color:var(--down)}
+  .modal h3{font-family:var(--serif);font-weight:600;font-size:18px;margin:0 0 7px}
+  .modal p{font-size:13.5px;color:var(--muted);line-height:1.5;margin:0 0 18px}
+  .modal-acts{display:flex;gap:10px}
+  .modal-acts .btn{padding:13px;font-size:14px}
   .pend{opacity:.7}
   .invite{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
   .invite .eyebrow{margin-bottom:10px}
@@ -159,7 +180,7 @@
   .drow .k{color:var(--muted)}
   .drow .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
   .drow .v.neg{color:var(--down)} .drow .v.mask{color:var(--faint)}
-  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px 24px;background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
+  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
   .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:4px 0}
   .tab.on{color:var(--ink)}
   .fab{width:50px;height:50px;border-radius:16px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 22px -8px rgba(201,138,58,.7);margin-bottom:6px;flex:none}
@@ -169,18 +190,21 @@
   .note svg{flex:none;margin-top:1px}
   .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:11px 16px;border-radius:11px;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap;z-index:30;box-shadow:0 12px 26px -10px rgba(0,0,0,.5);max-width:86%}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .a2hs{position:absolute;left:12px;right:12px;bottom:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:11px 12px;display:flex;align-items:center;gap:11px;box-shadow:0 16px 36px -14px rgba(15,49,56,.5);transform:translateY(150%);transition:transform .3s cubic-bezier(.2,.85,.25,1);z-index:35}
+  .a2hs.show{transform:none}
+  .a2hs img{width:40px;height:40px;border-radius:10px;flex:none}
+  .a2hs .tx{flex:1;min-width:0}
+  .a2hs .tx b{font-size:13.5px;font-weight:600;display:block;line-height:1.2}
+  .a2hs .tx span{font-size:11.5px;color:var(--muted)}
+  .a2hs .add{flex:none;border:none;background:var(--ink);color:#fff;font-family:var(--sans);font-weight:600;font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer}
+  .a2hs .esc{flex:none;border:none;background:transparent;color:var(--faint);font-size:21px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+  .a2hs .esc:active{background:var(--line2)}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-  @media (max-width:430px){body{padding:0}.device{height:100vh;max-height:none;border-radius:0;box-shadow:none}.statusbar{padding-top:14px}}
+  @media (max-width:430px){body{padding:0}.device{height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none}}
 </style>
 </head>
 <body>
 <div class="device" id="device">
-  <div class="statusbar"><span id="clock">9:41</span>
-    <span class="right">
-      <svg width="15" height="11" viewBox="0 0 15 11"><rect x="0" y="7" width="2.5" height="4" rx="1" fill="#0F3138"/><rect x="4" y="4.5" width="2.5" height="6.5" rx="1" fill="#0F3138"/><rect x="8" y="2" width="2.5" height="9" rx="1" fill="#0F3138"/><rect x="12" y="0" width="2.5" height="11" rx="1" fill="#0F3138" opacity=".35"/></svg>
-      <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.6" fill="none" stroke="#0F3138" stroke-opacity=".4"/><rect x="2" y="2" width="14" height="7" rx="1.4" fill="#0F3138"/></svg>
-    </span>
-  </div>
 
   <!-- SIGN IN -->
   <section class="screen active" id="signin">
@@ -266,6 +290,22 @@
     <div class="pad" id="profileBody" style="padding-bottom:30px"></div>
   </section>
 
+  <div class="a2hs" id="a2hs">
+    <img src="/icon-192.png" alt=""/>
+    <div class="tx"><b>Add Tijori to your home screen</b><span id="a2hsSub">Launches full screen, like an app.</span></div>
+    <button class="add" onclick="doA2HS()">Add</button>
+    <button class="esc" aria-label="Dismiss" onclick="dismissA2HS()">&times;</button>
+  </div>
+
+  <div class="modalback" id="modalBack" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-ic" id="modalIc"></div>
+      <h3 id="modalTitle"></h3>
+      <p id="modalMsg"></p>
+      <div class="modal-acts"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="modalConfirm">Confirm</button></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -302,7 +342,7 @@
   const softTint={"var(--bank)":"#E9F1F6","var(--fd)":"#EAF3EE","var(--trading)":"#F6ECE4","var(--mf)":"#F0EBF6","var(--property)":"#F5EEDF","var(--pf)":"#E8F0F3","var(--nsf)":"#F1F1E6","var(--gold)":"#F8F1D8","var(--locker)":"#F1ECE1","var(--insurance)":"#E8F1ED","var(--down)":"#F7ECE9"};
   const tint=c=>softTint[c]||"#EEF1F2";
 
-  const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[]};
+  const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[],creatorSub:""};
   const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
   let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
   let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="viewer", editingId=null;
@@ -340,9 +380,15 @@
   function insCounts(f){const o={life:0,medical:0};insEntries(f).forEach(e=>{o[isMedical(e)?"medical":"life"]++;});return o;}
   function entryTitle(e){const t=e.type;if(t==="property")return e.key;if(t==="locker")return (e.label||"Locker")+(e.branch?" · "+e.branch:"");if(t==="gold")return "Gold · "+(e.label||"holding");if(t==="loan")return (e.label||"Loan")+(e.purpose?" · "+e.purpose:"");return e.label||meta(e).label;}
 
-  function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));const sc=$("#"+id);if(sc)sc.scrollTop=0;}
+  let curScreen="signin";
+  function show(id){curScreen=id;document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));const sc=$("#"+id);if(sc)sc.scrollTop=0;updateA2HS();}
   window.show=show;
   function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2400);}
+  const M_TRASH='<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const M_INFO='<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  let _modalCb=null;
+  window.openModal=function(o){o=o||{};const ic=$("#modalIc");ic.className="modal-ic"+(o.danger?" danger":"");ic.innerHTML=o.icon==="trash"?M_TRASH:M_INFO;$("#modalTitle").textContent=o.title||"Are you sure?";$("#modalMsg").textContent=o.msg||"";const cb=$("#modalConfirm");cb.textContent=o.confirm||"Confirm";cb.className="btn"+(o.danger?" danger":"");_modalCb=o.onConfirm||null;cb.onclick=function(){const fn=_modalCb;closeModal();if(fn)fn();};$("#modalBack").classList.add("show");};
+  window.closeModal=function(){$("#modalBack").classList.remove("show");_modalCb=null;};
   window.back2=function(){ show(S.familyId?"app":"home"); };
 
   // ---------- crypto ----------
@@ -441,7 +487,7 @@
       const f=await api("/api/families","POST",{name,roleBundles:{full,custodian}});
       S.detKey=await importRaw(b64(KdRaw)); S.valKey=await importRaw(b64(KvRaw));
       S.familyId=f.id;S.familyName=f.name;S.myRole="maintainer";decryptFailed=false;valDecryptFailed=false;owners.clear();myEntries=[];
-      S.members=f.members||[]; S.myVer=Number(localStorage.getItem("tijori:ver:"+f.id+":"+S.sub)||0);
+      S.members=f.members||[]; S.creatorSub=f.creatorSub||S.sub; S.myVer=Number(localStorage.getItem("tijori:ver:"+f.id+":"+S.sub)||0);
       finishOpen();
     }catch(e){ toast("Create failed: "+e.message); }
   };
@@ -470,7 +516,7 @@
   async function openExisting(fid,name,role,pass){
     S.familyId=fid;S.familyName=name||"Family";decryptFailed=false;valDecryptFailed=false;owners.clear();myEntries=[];
     const d=await api("/api/families/"+fid+"/objects");
-    S.members=d.family.members; S.myRole=d.family.role||role||"viewer";
+    S.members=d.family.members; S.myRole=d.family.role||role||"viewer"; S.creatorSub=d.family.creatorSub||"";
     const tier=S.myRole==="custodian"?"custodian":"full";
     const bundle=(d.roleBundles||{})[tier];
     if(!bundle)throw new Error("no key set for this role yet");
@@ -510,6 +556,8 @@
     if(m.type==="object"){if(m.familyId!==S.familyId)return;applyObject(m.ownerSub,m.v,m.ciphertext,m);return;}
     if(m.type==="roster"){if(m.familyId!==S.familyId)return;S.members=m.members;const mine=m.members.find(x=>x.sub===S.sub);if(mine)S.myRole=mine.role;rebuild();softRender();return;}
     if(m.type==="invite"){toast("New family invite — check Families");loadMe().catch(()=>{});return;}
+    if(m.type==="removed"){if(m.familyId===S.familyId){toast("You were removed from "+(m.name||"the family"));leaveFamily();}else{loadMe().catch(()=>{});}return;}
+    if(m.type==="family_deleted"){if(m.familyId===S.familyId){toast((m.name||"The family")+" was deleted");leaveFamily();}else{loadMe().catch(()=>{});}return;}
   }
   async function applyObject(sub,v,ciphertext,info){
     const localV=owners.has(sub)?owners.get(sub).v:-1;
@@ -604,7 +652,11 @@
   }
   function renderMembers(f){
     const rc=r=>r==="maintainer"?["maint","Maintainer"]:r==="custodian"?["cust","Custodian"]:["view","View only"];
-    const cards=f.members.map(m=>{const c=memberCount(f,m.id),tag=rc(m.role);const ml=showAmt()?`${c} entr${c!==1?"ies":"y"} · ${inrC(memberAssets(f,m.id))}`:`${c} entr${c!==1?"ies":"y"}`;return `<div class="mcard"><div class="av" style="background:${m.color}">${m.initials}</div><div class="mid"><b>${m.you?"You":m.name} ${m.you?'<span class="youtag">YOU</span>':""}</b><div class="em">${m.email||"—"}</div><div class="meta">${ml}</div></div><div class="rolechip ${tag[0]}">${tag[1]}</div></div>`;}).join("");
+    const iAmCreator=S.sub===S.creatorSub;
+    const cards=f.members.map(m=>{const c=memberCount(f,m.id),tag=rc(m.role),isCreator=m.id===S.creatorSub;const ml=showAmt()?`${c} entr${c!==1?"ies":"y"} · ${inrC(memberAssets(f,m.id))}`:`${c} entr${c!==1?"ies":"y"}`;
+      const tags=`${m.you?'<span class="youtag">YOU</span>':""}${isCreator?'<span class="crtag">CREATOR</span>':""}`;
+      const rm=(iAmCreator&&!isCreator)?`<button class="rmbtn" aria-label="Remove member" onclick="removeMember('${m.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`:"";
+      return `<div class="mcard"><div class="av" style="background:${m.color}">${m.initials}</div><div class="mid"><b>${m.you?"You":m.name} ${tags}</b><div class="em">${m.email||"—"}</div><div class="meta">${ml}</div></div><div class="rolechip ${tag[0]}">${tag[1]}</div>${rm}</div>`;}).join("");
     const pend=(LIVE._pending||[]).map(p=>`<div class="mcard pend"><div class="av" style="background:#B7C0C4">@</div><div class="mid"><b>${p.email}</b><div class="meta">Invited as ${p.role} · pending</div></div><div class="rolechip view">Invited</div></div>`).join("");
     const invite=canEdit()?`<div class="invite"><div class="eyebrow">Invite a member</div>
       <div class="field"><label>Their Google email</label><input id="invEmail" placeholder="name@gmail.com"></div>
@@ -612,8 +664,11 @@
       <button class="btn" onclick="sendInvite()">Send invite</button>
       <div class="note" style="margin-top:12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>They'll see the invite when they sign in. Give them the right key separately: the <b>family key</b> for a maintainer or viewer, the <b>custodian key</b> for a custodian.</span></div></div>`
       :`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>Only maintainers can invite members.</span></div>`;
-    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Members</h3><span class="eyebrow">${f.members.length}</span></div>${cards}${pend}${invite}<div style="height:14px"></div>`;
+    const danger=iAmCreator?`<div class="grouphdr" style="margin-top:22px;color:var(--down)">Danger zone</div><button class="btn ghost" style="color:var(--down);border-color:#E7C7BF" onclick="deleteFamily()">Delete this family</button><div class="meta" style="font-size:11.5px;color:var(--muted);margin-top:8px;text-align:center">Only you, as creator, can delete <b>${f.name}</b> for everyone.</div>`:"";
+    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Members</h3><span class="eyebrow">${f.members.length}</span></div>${cards}${pend}${invite}${danger}<div style="height:14px"></div>`;
   }
+  window.removeMember=function(id){const f=cur();const m=f.members.find(x=>x.id===id);if(!m)return;openModal({danger:true,icon:"trash",title:"Remove "+(m.name||"member")+"?",msg:m.name+" will lose access to "+f.name+". You can re-invite them later.",confirm:"Remove",onConfirm:async()=>{try{await api("/api/families/"+S.familyId+"/members/"+encodeURIComponent(id),"DELETE");await refreshFamily();toast(m.name+" removed");}catch(e){toast(e.message==="not_creator"?"Only the creator can remove members":"Remove failed: "+e.message);}}});};
+  window.deleteFamily=function(){const f=cur();openModal({danger:true,icon:"trash",title:"Delete "+f.name+"?",msg:"This permanently deletes "+f.name+" and all its data for everyone. This can't be undone.",confirm:"Delete family",onConfirm:async()=>{try{await api("/api/families/"+S.familyId,"DELETE");toast("Family deleted");leaveFamily();}catch(e){toast(e.message==="not_creator"?"Only the creator can delete this family":"Delete failed: "+e.message);}}});};
   window.invRoleSet=function(b){invRole=b.dataset.r;document.querySelectorAll("#invSeg button").forEach(x=>x.classList.toggle("on",x===b));};
   window.sendInvite=async function(){const email=($("#invEmail").value||"").trim();if(!email){toast("Enter a Google email");return;}try{await api("/api/families/"+S.familyId+"/invite","POST",{email,role:invRole});toast("Invite sent to "+email);$("#invEmail").value="";await refreshFamily();}catch(e){toast(e.message==="already_member"?"Already a member":"Invite failed: "+e.message);}};
   async function refreshFamily(){try{const d=await api("/api/families/"+S.familyId+"/objects");S.members=d.family.members;LIVE&&(LIVE._pending=d.family.pendingInvites||[]);rebuild();if(LIVE)LIVE._pending=d.family.pendingInvites||[];softRender();}catch(e){}}
@@ -663,8 +718,27 @@
   window.leaveFamily=function(){if(S.ws){try{S.ws.close();}catch(e){}}S.ws=null;S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];loadMe().then(()=>show("home")).catch(()=>show("home"));};
   window.signOut=function(){if(S.ws){try{S.ws.close();}catch(e){}}try{google.accounts.id.disableAutoSelect();}catch(e){}S.idToken="";S.familyId="";S.detKey=null;S.valKey=null;owners.clear();myEntries=[];show("signin");};
 
-  function tick(){const d=new Date();let h=d.getHours()%12||12,m=d.getMinutes();$("#clock").textContent=h+":"+(m<10?"0":"")+m;}
+  function tick(){const c=$("#clock");if(!c)return;const d=new Date();let h=d.getHours()%12||12,m=d.getMinutes();c.textContent=h+":"+(m<10?"0":"")+m;}
   tick();setInterval(tick,30000);
+
+  // ---- Add to Home Screen ----
+  let deferredPrompt=null;
+  const isStandalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  function a2hsDismissed(){try{return localStorage.getItem("tijori:a2hs")==="dismissed";}catch(e){return false;}}
+  function shouldA2HS(){return !isStandalone && !a2hsDismissed() && (!!deferredPrompt || isIOS);}
+  window.updateA2HS=function(){const el=$("#a2hs");if(!el)return;el.classList.toggle("show",shouldA2HS()&&curScreen==="home");};
+  window.dismissA2HS=function(){const el=$("#a2hs");if(el)el.classList.remove("show");try{localStorage.setItem("tijori:a2hs","dismissed");}catch(e){}};
+  window.doA2HS=async function(){
+    if(deferredPrompt){try{deferredPrompt.prompt();const c=await deferredPrompt.userChoice;deferredPrompt=null;if(c&&c.outcome==="accepted")$("#a2hs").classList.remove("show");else updateA2HS();}catch(e){}}
+    else if(isIOS){openModal({icon:"info",title:"Add to Home Screen",msg:"In Safari, tap the Share icon (square with an up-arrow), then choose “Add to Home Screen.”",confirm:"Got it"});}
+    else{openModal({icon:"info",title:"Install Tijori",msg:"Open your browser menu and choose “Install app” or “Add to Home screen.”",confirm:"Got it"});}
+  };
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;updateA2HS();});
+  window.addEventListener("appinstalled",()=>{deferredPrompt=null;const el=$("#a2hs");if(el)el.classList.remove("show");});
+  window.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("#modalBack").classList.contains("show"))closeModal();else if($("#a2hs").classList.contains("show"))dismissA2HS();}});
+  if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}
+  updateA2HS();
 })();
 </script>
 </body>

@@ -121,6 +121,38 @@ app.post('/api/families/:id/decline', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// remove a member (creator only) — can't remove the creator
+app.delete('/api/families/:id/members/:sub', auth, (req, res) => {
+  const f = db.families[req.params.id];
+  if (!f) return res.status(404).json({ error: 'no_family' });
+  if (f.creatorSub !== req.user.sub) return res.status(403).json({ error: 'not_creator' });
+  const target = req.params.sub;
+  if (target === f.creatorSub) return res.status(400).json({ error: 'cant_remove_creator' });
+  if (!f.members[target]) return res.status(404).json({ error: 'not_member' });
+  const name = f.members[target].name;
+  delete f.members[target];
+  if (db.objects[f.id]) delete db.objects[f.id][target];
+  persist();
+  pushRoster(f.id);                                              // remaining members refresh
+  pushToSub(target, { type: 'removed', familyId: f.id, name: f.name }); // the removed member
+  for (const [, info] of clients) if (info.sub === target && info.families) info.families.delete(f.id);
+  res.json({ ok: true, removed: name });
+});
+
+// delete an entire family (creator only)
+app.delete('/api/families/:id', auth, (req, res) => {
+  const f = db.families[req.params.id];
+  if (!f) return res.status(404).json({ error: 'no_family' });
+  if (f.creatorSub !== req.user.sub) return res.status(403).json({ error: 'not_creator' });
+  const fid = f.id, fname = f.name, memberSubs = Object.keys(f.members);
+  delete db.families[fid];
+  delete db.objects[fid];
+  persist();
+  for (const sub of memberSubs) pushToSub(sub, { type: 'family_deleted', familyId: fid, name: fname });
+  for (const [, info] of clients) if (info.families) info.families.delete(fid);
+  res.json({ ok: true });
+});
+
 // fetch the family's roster + every member's latest encrypted object (members only)
 app.get('/api/families/:id/objects', auth, (req, res) => {
   const f = db.families[req.params.id];
@@ -186,6 +218,11 @@ function pushRoster(fid) {
   const roster = Object.values(f.members).map(m => ({ sub: m.sub, name: m.name, email: m.email, role: m.role }));
   for (const [ws, info] of clients) {
     if (f.members[info.sub]) { info.families.add(fid); try { ws.send(JSON.stringify({ type: 'roster', familyId: fid, members: roster })); } catch {} }
+  }
+}
+function pushToSub(sub, msg) {
+  for (const [ws, info] of clients) {
+    if (info.sub === sub) { try { ws.send(JSON.stringify(msg)); } catch {} }
   }
 }
 function pushInviteNotice(f, email) {
