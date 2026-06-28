@@ -351,7 +351,7 @@
   const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[],creatorSub:""};
   const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
   let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
-  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="viewer", editingId=null;
+  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="custodian", editingId=null;
   let homeFamilies=[], homeInvites=[];
 
   const $=s=>document.querySelector(s);
@@ -685,7 +685,7 @@
     const pend=(LIVE._pending||[]).map(p=>`<div class="mcard pend"><div class="av" style="background:#B7C0C4">@</div><div class="mid"><b>${p.email}</b><div class="meta">Invited as ${p.role} · pending</div></div><div class="rolechip view">Invited</div></div>`).join("");
     const invite=canEdit()?`<div class="invite"><div class="eyebrow">Invite a member</div>
       <div class="field"><label>Their Google email</label><input id="invEmail" placeholder="name@gmail.com"></div>
-      <div class="field"><label>Role</label><div class="seg" id="invSeg"><button class="on" data-r="maintainer" onclick="invRoleSet(this)">Maintainer</button><button data-r="viewer" onclick="invRoleSet(this)">View only</button><button data-r="custodian" onclick="invRoleSet(this)">Custodian</button></div></div>
+      <div class="field"><label>Role</label><div class="seg" id="invSeg"><button class="${invRole==='maintainer'?'on':''}" data-r="maintainer" onclick="invRoleSet(this)">Maintainer</button><button class="${invRole==='viewer'?'on':''}" data-r="viewer" onclick="invRoleSet(this)">View only</button><button class="${invRole==='custodian'?'on':''}" data-r="custodian" onclick="invRoleSet(this)">Custodian</button></div></div>
       <button class="btn" onclick="sendInvite()">Send invite</button>
       <div class="note" style="margin-top:12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>They'll see the invite when they sign in. Give them the right key separately: the <b>family key</b> for a maintainer or viewer, the <b>custodian key</b> for a custodian.</span></div></div>`
       :`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>Only maintainers can invite members.</span></div>`;
@@ -695,7 +695,7 @@
   window.removeMember=function(id){const f=cur();const m=f.members.find(x=>x.id===id);if(!m)return;openModal({danger:true,icon:"trash",title:"Remove "+(m.name||"member")+"?",msg:m.name+" will lose access to "+f.name+". You can re-invite them later.",confirm:"Remove",onConfirm:async()=>{try{await api("/api/families/"+S.familyId+"/members/"+encodeURIComponent(id),"DELETE");await refreshFamily();toast(m.name+" removed");}catch(e){toast(e.message==="not_creator"?"Only the creator can remove members":"Remove failed: "+e.message);}}});};
   window.deleteFamily=function(){const f=cur();openModal({danger:true,icon:"trash",title:"Delete "+f.name+"?",msg:"This permanently deletes "+f.name+" and all its data for everyone. This can't be undone.",confirm:"Delete family",onConfirm:async()=>{try{await api("/api/families/"+S.familyId,"DELETE");toast("Family deleted");leaveFamily();}catch(e){toast(e.message==="not_creator"?"Only the creator can delete this family":"Delete failed: "+e.message);}}});};
   window.invRoleSet=function(b){invRole=b.dataset.r;document.querySelectorAll("#invSeg button").forEach(x=>x.classList.toggle("on",x===b));};
-  window.sendInvite=async function(){const email=($("#invEmail").value||"").trim();if(!email){toast("Enter a Google email");return;}try{await api("/api/families/"+S.familyId+"/invite","POST",{email,role:invRole});toast("Invite sent to "+email);$("#invEmail").value="";await refreshFamily();}catch(e){toast(e.message==="already_member"?"Already a member":"Invite failed: "+e.message);}};
+  window.sendInvite=async function(){const email=($("#invEmail").value||"").trim();if(!email){toast("Enter a Google email");return;}try{await api("/api/families/"+S.familyId+"/invite","POST",{email,role:invRole});toast("Invite sent to "+email);$("#invEmail").value="";invRole="custodian";await refreshFamily();}catch(e){toast(e.message==="already_member"?"Already a member":"Invite failed: "+e.message);}};
   async function refreshFamily(){try{const d=await api("/api/families/"+S.familyId+"/objects");S.members=d.family.members;LIVE&&(LIVE._pending=d.family.pendingInvites||[]);rebuild();if(LIVE)LIVE._pending=d.family.pendingInvites||[];softRender();}catch(e){}}
 
   // ---------- add ----------
