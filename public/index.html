@@ -223,8 +223,7 @@
   .drow .k{color:var(--muted)}
   .drow .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
   .drow .v.neg{color:var(--down)} .drow .v.mask{color:var(--faint)}
-  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px;padding-bottom:max(22px, calc(14px + env(safe-area-inset-bottom, 0px)));background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
-  @media (display-mode:standalone){.tabbar{padding-bottom:max(32px, calc(16px + env(safe-area-inset-bottom, 0px)))}}
+  .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px 18px;background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
   .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:4px 0}
   .tab.on{color:var(--ink)}
   .fab{width:50px;height:50px;border-radius:16px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 22px -8px rgba(201,138,58,.7);margin-bottom:6px;flex:none}
@@ -247,7 +246,7 @@
   @media (max-width:500px), (display-mode:standalone){
     html,body{background:var(--app)}
     body{padding:0;margin:0;min-height:100dvh;display:block;background-image:none}
-    .device{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none}
+    .device{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   }
 </style>
 </head>
