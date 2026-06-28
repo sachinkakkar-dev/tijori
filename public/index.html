@@ -178,6 +178,9 @@
   .split .pie-wrap>svg{flex:none}
   .split .pie-wrap .legend{margin-top:0;flex:1;min-width:0}
   .split .lr{display:flex;align-items:center;gap:9px;font-size:13px}
+  .split .lr.tap{cursor:pointer;margin:-4px -8px;padding:4px 8px;border-radius:9px;transition:background .15s}
+  .split .lr.tap:active{background:var(--app)}
+  .split .lr .lrx{color:var(--faint,#9AA8AC);font-size:17px;font-weight:600;margin-left:-2px}
   .split .lr .d{width:10px;height:10px;border-radius:3px;flex:none}
   .split .lr .nm{flex:1}
   .split .lr .vv{font-family:var(--serif);font-weight:600;font-variant-numeric:tabular-nums}
@@ -393,9 +396,9 @@
   const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
   let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
   let curTab="overview", addingType=null, addKind="asset", draft={}, invRole="custodian", editingId=null;
-  let fClasses=new Set(), fTypes=new Set(), fMembers=new Set(), fPanelOpen=false;
-  const fStageOpen={c:true,t:true,m:true};
-  function resetFilters(){fClasses=new Set();fTypes=new Set();fMembers=new Set();fPanelOpen=false;fStageOpen.c=fStageOpen.t=fStageOpen.m=true;}
+  let fClasses=new Set(), fTypes=new Set(), fRisk=new Set(), fLiq=new Set(), fMembers=new Set(), fPanelOpen=false;
+  const fStageOpen={c:true,t:true,r:true,l:true,m:true};
+  function resetFilters(){fClasses=new Set();fTypes=new Set();fRisk=new Set();fLiq=new Set();fMembers=new Set();fPanelOpen=false;fStageOpen.c=fStageOpen.t=fStageOpen.r=fStageOpen.l=fStageOpen.m=true;}
   let homeFamilies=[], homeInvites=[];
 
   const $=s=>document.querySelector(s);
@@ -439,6 +442,7 @@
   function natureOf(e){return (e.type==="property"&&e.ownership==="Fractional")?"financial":TYPES[e.type].nature;}
   function natureTotals(f){const o={cash:0,financial:0,physical:0};valued(f).forEach(e=>{o[natureOf(e)]+=e.value||0;});return o;}
   function liqTotals(f){const o={liquid:0,illiquid:0};valued(f).forEach(e=>{o[TYPES[e.type].liq]+=e.value||0;});return o;}
+  function liqOf(e){return e.kind==="liab"?null:(TYPES[e.type]?TYPES[e.type].liq:null);}
   function instrument(e){
     if(e.kind==="liab")return "liab";
     const t=e.type;
@@ -454,6 +458,8 @@
   function riskOf(e){const i=instrument(e);if(i==="liab")return null;if(i==="equity")return "high";if(i==="hybrid")return "medium";return "low";}
   function riskTotals(f){const o={high:0,medium:0,low:0};valued(f).forEach(e=>{const r=riskOf(e);if(r&&o[r]!==undefined)o[r]+=e.value||0;});return o;}
   const PIE=[["equity","Equity","var(--trading)"],["debt","Debt","var(--pf)"],["cash","Cash & deposits","var(--bank)"],["otherfin","Other financials","var(--mf)"],["physical","Physical","var(--property)"]];
+  const RISKOPT=[["high","High","var(--trading)"],["medium","Medium","var(--gold)"],["low","Low","var(--fd)"]];
+  const LIQOPT=[["liquid","Liquid","var(--fd)"],["illiquid","Illiquid","var(--locker)"]];
   function pieCat(e){const i=instrument(e);return (i==="equity"||i==="debt"||i==="cash"||i==="physical")?i:"otherfin";}
   function pieParts(f,byCount){const o={equity:0,debt:0,cash:0,otherfin:0,physical:0};valued(f).forEach(e=>{o[pieCat(e)]+=byCount?1:(e.value||0);});return PIE.map(([k,name,color])=>({name,val:o[k],color}));}
   function natureCounts(f){const o={cash:0,financial:0,physical:0};valued(f).forEach(e=>{o[natureOf(e)]++;});return o;}
@@ -744,7 +750,9 @@
         <div class="panel-inner">
           ${stage("c",1,"Class","fClassChips")}
           ${stage("t",2,"Type","fTypeBody")}
-          ${stage("m",3,"Maintained by","fMemberChips")}
+          ${stage("r",3,"Risk","fRiskChips")}
+          ${stage("l",4,"Liquidity","fLiqChips")}
+          ${stage("m",5,"Maintained by","fMemberChips")}
         </div>
         <div class="panel-foot"><button class="clearbtn" id="fclear" onclick="fClear(event)">Clear all</button><div class="cnt"><b id="frescount">0</b> shown</div></div>
       </div>
@@ -755,7 +763,7 @@
   function fFiltered(f){
     return f.entries.filter(e=>{
       const cls=classOf(e);
-      return (!fClasses.size||fClasses.has(cls)) && (!fTypes.size||typeTokens(e).some(tk=>fTypes.has(tk))) && (!fMembers.size||fMembers.has(e.owner));
+      return (!fClasses.size||fClasses.has(cls)) && (!fTypes.size||typeTokens(e).some(tk=>fTypes.has(tk))) && (!fRisk.size||fRisk.has(riskOf(e))) && (!fLiq.size||fLiq.has(liqOf(e))) && (!fMembers.size||fMembers.has(e.owner));
     });
   }
   function fScopeClasses(){return fClasses.size?[...fClasses]:FCLASS;}
@@ -772,17 +780,24 @@
       const chips=toks.map(t=>`<button class="fchip ${fTypes.has(t)?"on":""}" onclick="fToggleType('${t}')"><span class="dot" style="background:${tokenColor(t)}"></span>${tokenLabel(t)}</button>`).join("");
       return `<div class="grp"><div class="glab">${c}</div><div class="chips">${chips}</div></div>`;
     }).join("");
+    const presentRisk=RISKOPT.filter(([k])=>f.entries.some(e=>riskOf(e)===k));
+    $("#fRiskChips").innerHTML=presentRisk.map(([k,lab,col])=>`<button class="fchip ${fRisk.has(k)?"on":""}" onclick="fToggleRisk('${k}')"><span class="dot" style="background:${col}"></span>${lab}</button>`).join("")||'<span class="fnone">—</span>';
+    const presentLiq=LIQOPT.filter(([k])=>f.entries.some(e=>liqOf(e)===k));
+    $("#fLiqChips").innerHTML=presentLiq.map(([k,lab,col])=>`<button class="fchip ${fLiq.has(k)?"on":""}" onclick="fToggleLiq('${k}')"><span class="dot" style="background:${col}"></span>${lab}</button>`).join("")||'<span class="fnone">—</span>';
     const mem=f.members.filter(m=>m.role!=="custodian"&&memberCount(f,m.id)>0);
     $("#fMemberChips").innerHTML=mem.map(m=>`<button class="fchip ${fMembers.has(m.id)?"on":""}" onclick="fToggleMember('${m.id}')"><span class="mav">${(m.you?"You":m.name)[0]}</span>${m.you?"You":m.name.split(" ")[0]}</button>`).join("")||'<span class="fnone">No maintainers</span>';
-    const active=fClasses.size+fTypes.size+fMembers.size;
+    const riskLab=k=>({high:"High",medium:"Medium",low:"Low"})[k]||k, liqLab=k=>({liquid:"Liquid",illiquid:"Illiquid"})[k]||k;
+    const active=fClasses.size+fTypes.size+fRisk.size+fLiq.size+fMembers.size;
     const bd=$("#fbadge");bd.style.display=active?"grid":"none";bd.textContent=active;
     $("#fbar").classList.toggle("active",active>0);
-    const parts=[];if(fClasses.size)parts.push(fNames(fClasses,c=>c));if(fTypes.size)parts.push(fNames(fTypes,tokenLabel));if(fMembers.size)parts.push(fNames(fMembers,id=>{const m=f.members.find(x=>x.id===id);return m?(m.you?"You":m.name.split(" ")[0]):id;}));
+    const parts=[];if(fClasses.size)parts.push(fNames(fClasses,c=>c));if(fTypes.size)parts.push(fNames(fTypes,tokenLabel));if(fRisk.size)parts.push(fNames(fRisk,riskLab)+" risk");if(fLiq.size)parts.push(fNames(fLiq,liqLab));if(fMembers.size)parts.push(fNames(fMembers,id=>{const m=f.members.find(x=>x.id===id);return m?(m.you?"You":m.name.split(" ")[0]):id;}));
     $("#fbarsum").textContent=parts.length?parts.join("  ·  "):"All holdings";
     $("#fsum-c").textContent=fClasses.size?fNames(fClasses,c=>c):"";
     $("#fsum-t").textContent=fTypes.size?fNames(fTypes,tokenLabel):"";
+    $("#fsum-r").textContent=fRisk.size?fNames(fRisk,riskLab):"";
+    $("#fsum-l").textContent=fLiq.size?fNames(fLiq,liqLab):"";
     $("#fsum-m").textContent=fMembers.size?fNames(fMembers,id=>{const m=f.members.find(x=>x.id===id);return m?(m.you?"You":m.name.split(" ")[0]):id;}):"";
-    $("#fst-c").classList.toggle("has",fClasses.size>0);$("#fst-t").classList.toggle("has",fTypes.size>0);$("#fst-m").classList.toggle("has",fMembers.size>0);
+    $("#fst-c").classList.toggle("has",fClasses.size>0);$("#fst-t").classList.toggle("has",fTypes.size>0);$("#fst-r").classList.toggle("has",fRisk.size>0);$("#fst-l").classList.toggle("has",fLiq.size>0);$("#fst-m").classList.toggle("has",fMembers.size>0);
     $("#fclear").disabled=active===0;
     const list=fFiltered(f);
     const aShown=list.filter(e=>e.kind==="asset"&&(e.type!=="insurance"||(e.value||0)>0)).reduce((s,e)=>s+e.value,0);
@@ -795,9 +810,12 @@
   window.fToggleStage=function(key){event.stopPropagation();fStageOpen[key]=!fStageOpen[key];$("#fst-"+key).classList.toggle("closed",!fStageOpen[key]);};
   window.fToggleClass=function(c){fClasses.has(c)?fClasses.delete(c):fClasses.add(c);updateFunnel();};
   window.fToggleType=function(t){fTypes.has(t)?fTypes.delete(t):fTypes.add(t);updateFunnel();};
+  window.fToggleRisk=function(k){fRisk.has(k)?fRisk.delete(k):fRisk.add(k);updateFunnel();};
+  window.fToggleLiq=function(k){fLiq.has(k)?fLiq.delete(k):fLiq.add(k);updateFunnel();};
+  window.fJump=function(dim,tok){resetFilters();if(dim==="risk")fRisk.add(tok);else if(dim==="liq")fLiq.add(tok);goApp("holdings");};
   window.fToggleMember=function(id){fMembers.has(id)?fMembers.delete(id):fMembers.add(id);updateFunnel();};
   window.fClear=function(e){if(e)e.stopPropagation();fClasses.clear();fTypes.clear();fMembers.clear();updateFunnel();};
-  function splitBlock(title,cap,parts){const tot=parts.reduce((s,p)=>s+p.val,0)||1;const track=parts.filter(p=>p.val>0).map(p=>`<div class="seg" style="width:${p.val/tot*100}%;background:${p.color}"></div>`).join("");const leg=parts.map(p=>`<div class="lr"><span class="d" style="background:${p.color}"></span><span class="nm">${p.name}</span><span class="vv">${showAmt()?inrC(p.val):p.val}</span><span class="pp">${Math.round(p.val/tot*100)}%</span></div>`).join("");return `<div class="split"><h4>${title}</h4><div class="cap">${cap}</div><div class="track">${track}</div><div class="legend">${leg}</div></div>`;}
+  function splitBlock(title,cap,parts,jump){const tot=parts.reduce((s,p)=>s+p.val,0)||1;const track=parts.filter(p=>p.val>0).map(p=>`<div class="seg" style="width:${p.val/tot*100}%;background:${p.color}"></div>`).join("");const leg=parts.map(p=>{const tap=(jump&&p.tok);return `<div class="lr${tap?" tap":""}"${tap?` onclick="fJump('${jump}','${p.tok}')"`:""}><span class="d" style="background:${p.color}"></span><span class="nm">${p.name}</span><span class="vv">${showAmt()?inrC(p.val):p.val}</span><span class="pp">${Math.round(p.val/tot*100)}%</span>${tap?'<span class="lrx">›</span>':""}</div>`;}).join("");return `<div class="split"><h4>${title}</h4><div class="cap">${cap}</div><div class="track">${track}</div><div class="legend">${leg}</div></div>`;}
   function pieBlock(title,cap,parts){
     const data=parts.filter(p=>p.val>0);const tot=data.reduce((s,p)=>s+p.val,0);
     let svg;
@@ -815,8 +833,8 @@
     const lt=liqTotals(f),rt=riskTotals(f),nw=netWorth(f),ic=insCover(f);
     $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">net worth ${inrC(nw)}</span></div>
       ${pieBlock("Asset mix","Equity, debt, cash & deposits, other financials and physical; ULIP value sits under its allocation",pieParts(f,false))}
-      ${splitBlock("Liquid vs illiquid","What you could access quickly",[{name:"Liquid",val:lt.liquid,color:"var(--fd)"},{name:"Illiquid",val:lt.illiquid,color:"var(--locker)"}])}
-      ${splitBlock("Risk profile","Equity high · hybrid medium · debt, PF, NSF & cash low",[{name:"High risk",val:rt.high,color:"var(--trading)"},{name:"Medium risk",val:rt.medium,color:"var(--gold)"},{name:"Low risk",val:rt.low,color:"var(--fd)"}])}
+      ${splitBlock("Liquid vs illiquid","What you could access quickly · tap to filter",[{name:"Liquid",val:lt.liquid,color:"var(--fd)",tok:"liquid"},{name:"Illiquid",val:lt.illiquid,color:"var(--locker)",tok:"illiquid"}],"liq")}
+      ${splitBlock("Risk profile","Equity high · hybrid medium · debt, PF, NSF & cash low · tap to filter",[{name:"High risk",val:rt.high,color:"var(--trading)",tok:"high"},{name:"Medium risk",val:rt.medium,color:"var(--gold)",tok:"medium"},{name:"Low risk",val:rt.low,color:"var(--fd)",tok:"low"}],"risk")}
       <div class="split"><h4>Liabilities</h4><div class="cap">Subtracted from assets to get net worth</div><div class="legend"><div class="lr"><span class="d" style="background:var(--down)"></span><span class="nm">Total owed</span><span class="vv" style="color:var(--down)">− ${inrC(liabTotal(f)).replace("− ","")}</span></div><div class="lr"><span class="d" style="background:var(--up)"></span><span class="nm">Net worth</span><span class="vv">${inrC(nw)}</span></div></div></div>
       ${hasIns?insBlock(ic.life,ic.medical,false):""}<div style="height:14px"></div>`;
   }
