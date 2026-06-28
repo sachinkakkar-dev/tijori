@@ -65,8 +65,9 @@
   .keyicon{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;background:var(--accent-soft);border:1px solid #ecdcbd;margin:8px 0 16px}
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
   .field label{font-size:12px;font-weight:600;color:var(--ink2)}
-  .field input,.field select{font-family:var(--sans);font-size:14px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#FbFcFc;color:var(--ink);outline:none}
-  .field input:focus,.field select:focus{border-color:var(--ink2);box-shadow:0 0 0 3px rgba(30,74,83,.12)}
+  .field input,.field select,.field textarea{font-family:var(--sans);font-size:14px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#FbFcFc;color:var(--ink);outline:none}
+  .field textarea{width:100%;resize:vertical;min-height:78px;line-height:1.5}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink2);box-shadow:0 0 0 3px rgba(30,74,83,.12)}
   .field .help{font-size:11.5px;color:var(--muted)}
   .field .help.warn{color:var(--down);font-weight:600}
   .pwrap{position:relative;display:flex}
@@ -224,6 +225,8 @@
   .drow .k{color:var(--muted)}
   .drow .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
   .drow .v.neg{color:var(--down)} .drow .v.mask{color:var(--faint)}
+  .drow.block{flex-direction:column;align-items:stretch;gap:7px}
+  .drow.block .vblock{font-weight:500;line-height:1.55;white-space:pre-wrap;word-break:break-word;text-align:left;color:var(--ink)}
   .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px 18px;background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
   .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:4px 0}
   .custbanner{display:flex;align-items:center;gap:8px;margin:0 16px 4px;padding:8px 12px;background:#FBF1DD;border:1px solid #E7D2A6;color:#7A5A1E;border-radius:11px;font-size:12px;font-weight:500}
@@ -391,7 +394,7 @@
   };
   const GROUPS=["Financial","Physical","Insurance","Liabilities"];
   // every holding gets an optional free-text Remarks field
-  [TYPES,LIAB].forEach(dict=>Object.values(dict).forEach(t=>{ if(!t.fields.some(f=>f[0]==="remarks")) t.fields.push(["remarks","Remarks","opt"]); }));
+  [TYPES,LIAB].forEach(dict=>Object.values(dict).forEach(t=>{ if(!t.fields.some(f=>f[0]==="remarks")) t.fields.push(["remarks","Remarks","area"]); }));
   const meta=e=> e.kind==="liab"?LIAB[e.type]:TYPES[e.type];
   const iconOf=e=> (e.type==="property"&&e.ownership==="Fractional")?"🧩":meta(e).icon;
   const softTint={"var(--bank)":"#E9F1F6","var(--fd)":"#EAF3EE","var(--trading)":"#F6ECE4","var(--mf)":"#F0EBF6","var(--property)":"#F5EEDF","var(--pf)":"#E8F0F3","var(--nsf)":"#F1F1E6","var(--gold)":"#F8F1D8","var(--locker)":"#F1ECE1","var(--insurance)":"#E8F1ED","var(--down)":"#F7ECE9"};
@@ -894,6 +897,10 @@
       if(kind2==="money"){
         return `<div class="field"><label>${label}</label><input type="text" data-k="${k}" data-kind="money" inputmode="text" placeholder="e.g. 5L, 1.2Cr, 50k" value="${v}" oninput="onField(this)"><span class="help" id="amthelp-${k}">${draft[k]!==undefined?("= "+inrC(draft[k])):"Plain number or 5L / 1.2Cr / 50k"}</span></div>`;
       }
+      if(kind2==="area"){
+        const tav=String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        return `<div class="field"><label>${label}</label><textarea data-k="${k}" data-kind="area" rows="3" placeholder="optional — notes, nominee details, anything to remember" oninput="onField(this)">${tav}</textarea></div>`;
+      }
       const val=String(v).replace(/"/g,"&quot;");
       return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input type="${kind2==="date"?"date":"text"}" data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${optional?"optional":""}" value="${val}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp"></span>':""}</div>`;
     }).join("");
@@ -912,7 +919,7 @@
     validate();
   };
   function checkKey(val){const h=$("#keyHelp");if(!h)return;val=(val||"").trim();const f=cur();if(!val){h.className="help";h.style.color="";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>e.id!==editingId&&(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.style.color="";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
-  function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(f=>{const k=f[0],kind=f[2];if(kind==="opt"||kind==="date")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
+  function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(f=>{const k=f[0],kind=f[2];if(kind==="opt"||kind==="date"||kind==="area")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
   window.saveEntry=async function(){const wasEdit=!!editingId;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];const e={kind:addKind,type:addingType,id:editingId||(S.sub+":"+crypto.randomUUID())};M.fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;if(wasEdit){const idx=myEntries.findIndex(x=>x.id===editingId);if(idx>=0)myEntries[idx]=e;else myEntries.unshift(e);}else myEntries.unshift(e);editingId=null;await publishMine();goApp("holdings");resetFilters();renderHoldings(cur());toast(wasEdit?"Updated & published":"Added & published");};
 
   window.openDetail=function(id){const f=cur();const e=f.entries.find(x=>x.id===id);if(!e)return;const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";const rows=[];
@@ -928,10 +935,10 @@
     if(e.limit!==undefined)rows.push(["Credit limit",showAmt()?inr(e.limit):"•••"]);if(e.cover!==undefined)rows.push(["Sum assured",showAmt()?inr(e.cover):"•••"]);
     if(e.maturity)rows.push(["Maturity date",fmtDate(e.maturity)]);
     rows.push([liab?"Outstanding":(e.type==="property"?"Market value":(e.type==="insurance"?"Market / terminal value":"Value")),showAmt()?`<span class="${liab?"neg":""}">${liab?"− ":""}${inr(e.value||0)}</span>`:`<span class="mask">•••</span>`]);
-    if(e.remarks)rows.push(["Remarks",e.remarks]);
+    if(e.remarks)rows.push(["Remarks",String(e.remarks).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"),"block"]);
     rows.push(["Maintained by",mine?"You":owner.name]);
     $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${iconOf(e)}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
-      <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
+      <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>r[2]==="block"?`<div class="drow block"><span class="k">${r[0]}</span><div class="vblock">${r[1]}</div></div>`:`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
       ${mine&&canEdit()?`<button class="btn" style="margin-top:16px" onclick="startEdit('${id}')">Edit entry</button><button class="btn ghost" style="margin-top:10px;color:var(--down);border-color:#E7C7BF" onclick="deleteEntry('${id}')">Delete entry</button>`:`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>${mine?"Read-only role here.":"Maintained by "+owner.name.split(" ")[0]+"."}</span></div>`}
       <button class="btn ghost" style="margin-top:10px" onclick="show('app')">Back</button>`;show("detail");};
   window.deleteEntry=async function(id){myEntries=myEntries.filter(x=>x.id!==id);await publishMine();show("app");goApp("holdings");toast("Deleted & published");};
