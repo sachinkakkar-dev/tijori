@@ -226,6 +226,9 @@
   .drow .v.neg{color:var(--down)} .drow .v.mask{color:var(--faint)}
   .tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;padding:9px 8px 18px;background:linear-gradient(180deg,rgba(242,245,247,0),var(--app) 32%);border-top:1px solid var(--line)}
   .tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:4px 0}
+  .custbanner{display:flex;align-items:center;gap:8px;margin:0 16px 4px;padding:8px 12px;background:#FBF1DD;border:1px solid #E7D2A6;color:#7A5A1E;border-radius:11px;font-size:12px;font-weight:500}
+  .custbanner span{flex:1}
+  .custbanner button{flex:none;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:600;font-family:var(--sans);cursor:pointer}
   .tab.on{color:var(--ink)}
   .fab{width:50px;height:50px;border-radius:16px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 22px -8px rgba(201,138,58,.7);margin-bottom:6px;flex:none}
   .empty{padding:38px 24px;text-align:center;color:var(--muted)}
@@ -314,6 +317,7 @@
   <!-- APP -->
   <section class="screen" id="app">
     <div class="apphead" id="appHead"></div>
+    <div id="custBanner"></div>
     <div id="appBody" style="flex:1;overflow-y:auto;overflow-x:hidden" class="pad"></div>
     <div class="tabbar" id="tabbar"></div>
   </section>
@@ -428,7 +432,7 @@
   const cur=()=>LIVE;
   const me=f=>f.members.find(m=>m.you)||f.members[0]||{name:S.name,initials:initialsOf(S.name),color:colorFor(S.sub),you:true};
   const member=(f,id)=>f.members.find(m=>m.id===id)||{name:"—",initials:"?",color:"#999",you:false};
-  const role=()=>S.myRole, canEdit=()=>S.myRole==="maintainer", showAmt=()=>!!S.valKey&&!valDecryptFailed;
+  const role=()=>S.myRole, canEdit=()=>S.myRole==="maintainer"&&!!S.valKey, showAmt=()=>!!S.valKey&&!valDecryptFailed;
 
   const assetEntries=f=>f.entries.filter(e=>e.kind==="asset");
   const liabEntries=f=>f.entries.filter(e=>e.kind==="liab");
@@ -591,7 +595,7 @@
     $("#uSeal").innerHTML=`<div style="width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:20px;background:${colorFor(fid)}">${(name||"F")[0].toUpperCase()}</div>`;
     $("#uSeal").style.background="transparent";$("#uSeal").style.border="none";
     const cust=roleHint==="custodian";
-    $("#uFields").innerHTML=`<div class="field"><label>${cust?"Custodian key":"Family key"}</label><div class="pwrap"><input id="uKey" type="password" placeholder="${cust?"Custodian passphrase — details only":"Family passphrase — unlocks everything"}" onkeydown="if(event.key==='Enter')doUnlock()"><button type="button" class="eye" aria-label="Show" onclick="toggleEye('uKey',this)">${EYE}</button></div></div>`;
+    $("#uFields").innerHTML=`<div class="field"><label>${cust?"Custodian key":"Family key"}</label><div class="pwrap"><input id="uKey" type="password" placeholder="${cust?"Custodian passphrase — details only":"Family passphrase — unlocks everything"}" onkeydown="if(event.key==='Enter')doUnlock()"><button type="button" class="eye" aria-label="Show" onclick="toggleEye('uKey',this)">${EYE}</button></div>${cust?"":'<span class="help">Tip: enter the custodian key here for an amounts-hidden view.</span>'}</div>`;
     $("#uHelp").textContent="";show("unlock");setTimeout(()=>{const x=$("#uKey");if(x)x.focus();},120);};
   window.doUnlock=async function(){const pass=$("#uKey").value;if(!pass)return;
     try{await openExisting(pendingFam.id,pendingFam.name,pendingFam.role,pass);}
@@ -610,10 +614,11 @@
     S.familyId=fid;S.familyName=name||"Family";decryptFailed=false;valDecryptFailed=false;owners.clear();myEntries=[];
     const d=await api("/api/families/"+fid+"/objects");
     S.members=d.family.members; S.myRole=d.family.role||role||"viewer"; S.creatorSub=d.family.creatorSub||"";
-    const tier=S.myRole==="custodian"?"custodian":"full";
-    const bundle=(d.roleBundles||{})[tier];
-    if(!bundle)throw new Error("no key set for this role yet");
-    let raw; try{raw=await unwrapBundle(pass,bundle);}catch(e){throw new Error("wrong_key");}
+    const tiers=S.myRole==="custodian"?["custodian"]:["full","custodian"];
+    let raw=null, usedTier=null;
+    for(const t of tiers){const b=(d.roleBundles||{})[t];if(!b)continue;try{raw=await unwrapBundle(pass,b);usedTier=t;break;}catch(e){}}
+    if(!raw)throw new Error("wrong_key");
+    S.custodianMode=(usedTier==="custodian");   // maintainer/viewer who entered the custodian key
     S.detKey=await importRaw(raw.kd);
     S.valKey=raw.kv?await importRaw(raw.kv):null;
     S.myVer=Number(localStorage.getItem("tijori:ver:"+fid+":"+S.sub)||0);
@@ -682,8 +687,17 @@
       <div class="htxt"><div class="fam"><span id="connDot" style="width:8px;height:8px;border-radius:50%;background:var(--faint);display:inline-block"></span>${f.name}</div><div class="sub"><span id="connTxt">connecting…</span> · ${f.members.length} member${f.members.length!==1?"s":""}</div></div>
       <div class="rolechip ${rc[0]}">${rc[1]}</div>
       <button class="pf" style="background:${me(f).color}" onclick="renderProfile()">${me(f).initials}</button>`;
+    renderBanner();
     setConn(connState);renderTabbar();renderBody();
   }
+  function renderBanner(){
+    const el=$("#custBanner");if(!el)return;
+    const inCust=S.myRole==="custodian"||S.custodianMode;
+    if(!inCust){el.innerHTML="";return;}
+    const viewDown=S.custodianMode&&S.myRole!=="custodian";
+    el.innerHTML=`<div class="custbanner"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg><span>Custodian view — amounts are hidden${viewDown?"":". Details only."}</span>${viewDown?'<button onclick="reFull()">Switch to full view</button>':""}</div>`;
+  }
+  window.reFull=function(){askOpen(S.familyId,S.familyName,S.myRole);};
   function renderTabbar(){
     const isMaint=canEdit();
     const I={overview:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm0 7h7v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z" fill="currentColor"/></svg>',holdings:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',insights:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 19V10M12 19V5M19 19v-6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',members:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.7"/></svg>'};

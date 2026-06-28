@@ -190,10 +190,14 @@ app.delete('/api/families/:id', auth, (req, res) => {
 app.get('/api/families/:id/objects', auth, (req, res) => {
   const f = db.families[req.params.id];
   if (!f) return res.status(404).json({ error: 'no_family' });
-  if (!f.members[req.user.sub]) return res.status(403).json({ error: 'not_member' });
+  const me = f.members[req.user.sub];
+  if (!me) return res.status(403).json({ error: 'not_member' });
+  const all = f.roleBundles || {};
+  // a custodian never receives the full bundle, so even knowing the family key buys them nothing
+  const roleBundles = me.role === 'custodian' ? { custodian: all.custodian } : all;
   res.json({
     family: famSummary(f, req.user.sub),
-    roleBundles: f.roleBundles || {},
+    roleBundles,
     objects: db.objects[f.id] || {}
   });
 });
