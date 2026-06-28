@@ -17,6 +17,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer onload="gisReady()"></script>
 <style>
   :root{
+    --navbar:48px; /* min height reserved for the phone's bottom system nav bar */
     --bg:#E7EBEE; --app:#F2F5F7; --surface:#FFFFFF;
     --ink:#0F3138; --ink2:#1E4A53; --muted:#6B7C81; --faint:#9AA8AC;
     --line:#E3E8EA; --line2:#EEF1F2;
@@ -246,7 +247,7 @@
   @media (max-width:500px), (display-mode:standalone){
     html,body{background:var(--app)}
     body{padding:0;margin:0;min-height:100dvh;display:block;background-image:none}
-    .device{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:max(22px, env(safe-area-inset-bottom,0px))}
+    .device{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;box-shadow:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:max(var(--navbar), env(safe-area-inset-bottom,0px))}
   }
 </style>
 </head>

@@ -1,6 +1,6 @@
 // Tijori service worker — enables install (A2HS) and an offline shell.
 // Network-first so fresh files show immediately while online; cache is only a fallback.
-const CACHE = 'tijori-v1';
+const CACHE = 'tijori-v2';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/icon-180.png'];
 
 self.addEventListener('install', (e) => {
