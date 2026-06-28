@@ -327,10 +327,10 @@
 
   const TYPES={
     bank:{label:"Bank account",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["acname","Account name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
-    fd:{label:"Fixed deposit",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"]]},
+    fd:{label:"Fixed deposit",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"],["maturity","Maturity date","date"]]},
     trading:{label:"Trading / equity",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📈",color:"var(--trading)",keyLabel:"Account number",fields:[["label","Provider","text"],["key","Account number","key"],["demat","Demat account (optional)","opt"],["value","Value","money"]]},
     mf:{label:"Mutual fund",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📊",color:"var(--mf)",keyLabel:"A/C / Folio no.",fields:[["label","Provider / AMC","text"],["key","A/C no. / Folio no.","key"],["value","Value","money"]]},
-    pf:{label:"PF · PPF / EPF",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"🏛️",color:"var(--pf)",keyLabel:"Account / UAN",fields:[["sub","PPF or EPF","text"],["label","Institution","text"],["key","Account / UAN","key"],["value","Balance","money"]]},
+    pf:{label:"PF · PPF / EPF",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"🏛️",color:"var(--pf)",keyLabel:"Account / UAN",fields:[["sub","Account type","select",["PPF","EPF","VPF"]],["label","Institution","text"],["key","Account / UAN","key"],["value","Balance","money"]]},
     nsf:{label:"National savings (NSF)",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"📜",color:"var(--nsf)",keyLabel:"Certificate no.",fields:[["label","Scheme / holder","text"],["key","Certificate no.","key"],["value","Value","money"]]},
     property:{label:"Property",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🏠",color:"var(--property)",keyLabel:"Location",fields:[["key","Location","key"],["value","Market value","money"],["papers","Location of papers","text"]]},
     gold:{label:"Gold / Silver",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🪙",color:"var(--gold)",keyLabel:"Identifier",fields:[["label","Form (jewellery / coins / bars)","text"],["key","Label / identifier","key"],["weight","Weight (optional)","opt"],["papers","Where it's kept","text"],["value","Value","money"]]},
@@ -342,6 +342,8 @@
     creditcard:{label:"Credit card",grp:"Liabilities",icon:"💳",color:"var(--down)",keyLabel:"Card (last 4)",fields:[["label","Issuer","text"],["key","Card (last 4)","key"],["limit","Credit limit (optional)","opt"],["value","Outstanding","money"]]}
   };
   const GROUPS=["Financial","Physical","Insurance","Liabilities"];
+  // every holding gets an optional free-text Remarks field
+  [TYPES,LIAB].forEach(dict=>Object.values(dict).forEach(t=>{ if(!t.fields.some(f=>f[0]==="remarks")) t.fields.push(["remarks","Remarks","opt"]); }));
   const meta=e=> e.kind==="liab"?LIAB[e.type]:TYPES[e.type];
   const softTint={"var(--bank)":"#E9F1F6","var(--fd)":"#EAF3EE","var(--trading)":"#F6ECE4","var(--mf)":"#F0EBF6","var(--property)":"#F5EEDF","var(--pf)":"#E8F0F3","var(--nsf)":"#F1F1E6","var(--gold)":"#F8F1D8","var(--locker)":"#F1ECE1","var(--insurance)":"#E8F1ED","var(--down)":"#F7ECE9"};
   const tint=c=>softTint[c]||"#EEF1F2";
@@ -359,6 +361,20 @@
 
   function inr(n){n=Math.round(n||0);const neg=n<0;n=Math.abs(n);let s=n.toString();if(s.length>3){const l=s.slice(-3);s=s.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,",")+","+l;}return (neg?"-₹":"₹")+s;}
   function inrC(n){const neg=n<0;n=Math.abs(n);let r;if(n>=1e7)r="₹"+(n/1e7).toFixed(2).replace(/\.?0+$/,"")+" Cr";else if(n>=1e5)r="₹"+(n/1e5).toFixed(2).replace(/\.?0+$/,"")+" L";else r=inr(n);return (neg?"− ":"")+r;}
+  function fmtDate(s){if(!s)return"";const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});}
+  function parseAmount(str){
+    if(str==null)return 0;
+    let s=String(str).trim().toLowerCase().replace(/[,₹\s]/g,"");
+    if(!s)return 0;
+    const m=s.match(/^(-?\d*\.?\d+)([a-z]*)$/);
+    if(!m){const n=Number(s.replace(/[^0-9.]/g,""));return isNaN(n)?0:Math.round(n);}
+    const num=parseFloat(m[1]); const suf=m[2]; let mult=1;
+    if(/^(k|thousand|thousands)$/.test(suf))mult=1e3;
+    else if(/^(l|lac|lacs|lakh|lakhs)$/.test(suf))mult=1e5;
+    else if(/^(cr|crore|crores)$/.test(suf))mult=1e7;
+    else if(/^(m|mn|million|millions)$/.test(suf))mult=1e6;
+    return Math.round((isNaN(num)?0:num)*mult);
+  }
   function amt(n,c){if(!showAmt())return '<span style="color:var(--faint);letter-spacing:1px">•••</span>';return c?inrC(n):inr(n);}
 
   const cur=()=>LIVE;
@@ -687,7 +703,20 @@
     const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];
     $("#formTitle").textContent=(editingId?"Edit ":"New ")+M.label.split(" · ")[0].toLowerCase();
     $("#formCap").textContent="The "+M.keyLabel.toLowerCase()+" must be unique in this family.";
-    $("#formFields").innerHTML=M.fields.map(([k,label,kind2])=>{const isKey=kind2==="key",opt=kind2==="opt";let v=draft[k];v=(v===undefined||v===null)?"":v;const val=String(v).replace(/"/g,"&quot;");return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${opt?"optional":""}" value="${val}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp"></span>':""}</div>`;}).join("");
+    $("#formFields").innerHTML=M.fields.map(f=>{
+      const k=f[0],label=f[1],kind2=f[2],opts=f[3];
+      const isKey=kind2==="key",optional=kind2==="opt"||kind2==="date";
+      let v=draft[k];v=(v===undefined||v===null)?"":v;
+      if(kind2==="select"){
+        const options=(opts||[]).map(o=>`<option value="${o}"${String(v)===o?" selected":""}>${o}</option>`).join("");
+        return `<div class="field"><label>${label}</label><select data-k="${k}" data-kind="select" onchange="onField(this)"><option value=""${v?"":" selected"} disabled>Select…</option>${options}</select></div>`;
+      }
+      if(kind2==="money"){
+        return `<div class="field"><label>${label}</label><input type="text" data-k="${k}" data-kind="money" inputmode="text" placeholder="e.g. 5L, 1.2Cr, 50k" value="${v}" oninput="onField(this)"><span class="help" id="amthelp-${k}">${draft[k]!==undefined?("= "+inrC(draft[k])):"Plain number or 5L / 1.2Cr / 50k"}</span></div>`;
+      }
+      const val=String(v).replace(/"/g,"&quot;");
+      return `<div class="field"><label>${label}${isKey?' · <span style="color:var(--accent)">key</span>':""}</label><input type="${kind2==="date"?"date":"text"}" data-k="${k}" data-kind="${kind2}" inputmode="${kind2==="money"?"numeric":"text"}" placeholder="${optional?"optional":""}" value="${val}" oninput="onField(this)">${isKey?'<span class="help" id="keyHelp"></span>':""}</div>`;
+    }).join("");
     $("#saveBtn").textContent=editingId?"Save changes":"Save & publish";
     const kf=M.fields.find(ff=>ff[2]==="key"); if(kf)checkKey(draft[kf[0]]||"");
     validate();
@@ -696,9 +725,14 @@
   window.pickType=function(t,kind){addingType=t;addKind=kind;editingId=null;draft={};buildForm();show("addForm");};
   window.startEdit=function(id){const e=(myEntries||[]).find(x=>x.id===id);if(!e){toast("You can only edit your own entries");return;}addingType=e.type;addKind=e.kind;editingId=id;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];draft={};M.fields.forEach(([k])=>{if(e[k]!==undefined)draft[k]=e[k];});draft._k=true;buildForm();show("addForm");};
   window.cancelForm=function(){const wasEdit=!!editingId;editingId=null;if(wasEdit)show("detail");else show("addType");};
-  window.onField=function(el){const k=el.getAttribute("data-k"),kind=el.getAttribute("data-kind");draft[k]=kind==="money"?(Number(el.value.replace(/[^0-9]/g,""))||0):el.value.trim();if(kind==="key")checkKey(el.value.trim());validate();};
+  window.onField=function(el){
+    const k=el.getAttribute("data-k"),kind=el.getAttribute("data-kind");
+    if(kind==="money"){draft[k]=parseAmount(el.value);const h=$("#amthelp-"+k);if(h)h.textContent=el.value.trim()?("= "+inrC(draft[k])):"Plain number or 5L / 1.2Cr / 50k";}
+    else{draft[k]=el.value.trim();if(kind==="key")checkKey(el.value.trim());}
+    validate();
+  };
   function checkKey(val){const h=$("#keyHelp");if(!h)return;val=(val||"").trim();const f=cur();if(!val){h.className="help";h.style.color="";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>e.id!==editingId&&(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.style.color="";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
-  function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(([k,_l,kind])=>{if(kind==="opt")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
+  function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(f=>{const k=f[0],kind=f[2];if(kind==="opt"||kind==="date")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
   window.saveEntry=async function(){const wasEdit=!!editingId;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];const e={kind:addKind,type:addingType,id:editingId||(S.sub+":"+crypto.randomUUID())};M.fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;if(wasEdit){const idx=myEntries.findIndex(x=>x.id===editingId);if(idx>=0)myEntries[idx]=e;else myEntries.unshift(e);}else myEntries.unshift(e);editingId=null;await publishMine();goApp("holdings");filter="all";renderHoldings(cur());toast(wasEdit?"Updated & published":"Added & published");};
 
   window.openDetail=function(id){const f=cur();const e=f.entries.find(x=>x.id===id);if(!e)return;const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";const rows=[];
@@ -709,7 +743,9 @@
     rows.push([M.keyLabel+" (key)",e.key]);if(e.demat)rows.push(["Demat account",e.demat]);if(e.weight)rows.push(["Weight",e.weight]);if(e.nominee)rows.push(["Nominee",e.nominee]);
     if(e.papers)rows.push([e.type==="locker"?"Key / papers":"Location of papers",e.papers]);
     if(e.limit!==undefined)rows.push(["Credit limit",showAmt()?inr(e.limit):"•••"]);if(e.cover!==undefined)rows.push(["Sum assured",showAmt()?inr(e.cover):"•••"]);
+    if(e.maturity)rows.push(["Maturity date",fmtDate(e.maturity)]);
     rows.push([liab?"Outstanding":(e.type==="property"?"Market value":(e.type==="insurance"?"Market / terminal value":"Value")),showAmt()?`<span class="${liab?"neg":""}">${liab?"− ":""}${inr(e.value||0)}</span>`:`<span class="mask">•••</span>`]);
+    if(e.remarks)rows.push(["Remarks",e.remarks]);
     rows.push(["Maintained by",mine?"You":owner.name]);
     $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${M.icon}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
       <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
