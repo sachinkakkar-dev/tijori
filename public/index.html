@@ -119,6 +119,43 @@
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:none;font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);cursor:pointer;white-space:nowrap}
   .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  /* funnel filter */
+  .filterbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px 13px;cursor:pointer;user-select:none;margin-top:8px}
+  .filterbar.active{border-color:#D8C6A2;background:#FFFDF8}
+  .filterbar .fic{width:30px;height:30px;border-radius:9px;background:var(--accent-soft,#F6ECDB);color:var(--accent);display:grid;place-items:center;flex:none}
+  .filterbar .ft{flex:1;min-width:0}
+  .filterbar .ft b{font-size:13.5px;font-weight:600;display:block;line-height:1.2}
+  .filterbar .ft span{font-size:11.5px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .filterbar .badge{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+  .filterbar .chev{flex:none;color:var(--faint,#9AA8AC);transition:transform .25s}
+  .filterbar.open .chev{transform:rotate(180deg)}
+  .panel{max-height:0;overflow:hidden;transition:max-height .32s ease, margin .25s;background:var(--surface);border-radius:14px;border:1px solid var(--line);margin-top:0}
+  .panel.open{max-height:1600px;margin-top:10px}
+  .panel-inner{padding:6px 4px 4px}
+  .stage{position:relative;padding:12px 14px 12px 46px}
+  .stage:not(:last-child){border-bottom:1px solid var(--line2,#EEF1F2)}
+  .stage .num{position:absolute;left:14px;top:13px;width:22px;height:22px;border-radius:50%;background:var(--app);border:1.5px solid var(--line);color:var(--muted);font-size:11px;font-weight:700;display:grid;place-items:center;z-index:1}
+  .stage.has .num{background:var(--accent);border-color:var(--accent);color:#fff}
+  .stage::before{content:"";position:absolute;left:24px;top:24px;bottom:-12px;width:2px;background:var(--line2,#EEF1F2)}
+  .stage:last-child::before{display:none}
+  .stage .shead{display:flex;align-items:center;gap:8px;cursor:pointer}
+  .stage .shead .stitle{flex:1;font-size:13px;font-weight:600}
+  .stage .shead .ssum{font-size:11px;color:var(--accent);font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stage .shead .sx{color:var(--faint,#9AA8AC);transition:transform .2s;flex:none}
+  .stage.closed .shead .sx{transform:rotate(-90deg)}
+  .stage .sbody{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+  .stage.closed .sbody{display:none}
+  .stage .grp .glab{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint,#9AA8AC);margin-bottom:7px}
+  .stage .chips{display:flex;flex-wrap:wrap;gap:7px;overflow:visible}
+  .fchip{font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--app);color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .fchip .dot{width:8px;height:8px;border-radius:3px;flex:none}
+  .fchip .mav{width:16px;height:16px;border-radius:50%;background:var(--ink2);color:#fff;font-size:8px;font-weight:700;display:grid;place-items:center}
+  .fchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .fnone{font-size:12px;color:var(--faint,#9AA8AC)}
+  .panel-foot{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:1px solid var(--line2,#EEF1F2)}
+  .panel-foot .cnt{font-size:12px;color:var(--muted)}.panel-foot .cnt b{color:var(--ink);font-weight:600}
+  .clearbtn{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--down);background:none;border:none;cursor:pointer;padding:6px 2px}
+  .clearbtn:disabled{color:var(--faint,#9AA8AC);cursor:default}
   .hold{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px;display:flex;align-items:center;gap:12px;cursor:pointer}
   .hold .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:16px}
   .hold .mid{flex:1;min-width:0}
@@ -137,6 +174,9 @@
   .split .track{height:14px;border-radius:8px;overflow:hidden;display:flex;background:var(--line2)}
   .split .seg{height:100%}
   .split .legend{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+  .split .pie-wrap{margin-top:12px;display:flex;align-items:center;gap:16px}
+  .split .pie-wrap>svg{flex:none}
+  .split .pie-wrap .legend{margin-top:0;flex:1;min-width:0}
   .split .lr{display:flex;align-items:center;gap:9px;font-size:13px}
   .split .lr .d{width:10px;height:10px;border-radius:3px;flex:none}
   .split .lr .nm{flex:1}
@@ -326,16 +366,16 @@
   // ==================================================
 
   const TYPES={
-    bank:{label:"Bank account",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["acname","Account name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
-    fd:{label:"Fixed deposit",grp:"Financial",nature:"financial",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"],["maturity","Maturity date","date"]]},
+    bank:{label:"Bank account",grp:"Financial",nature:"cash",liq:"liquid",risk:"low",icon:"🏦",color:"var(--bank)",keyLabel:"A/C number",fields:[["label","Bank name","text"],["acname","Account name","text"],["key","A/C number","key"],["value","Current balance","money"]]},
+    fd:{label:"Fixed deposit",grp:"Financial",nature:"cash",liq:"liquid",risk:"low",icon:"📑",color:"var(--fd)",keyLabel:"FD number",fields:[["label","Bank name","text"],["key","FD number","key"],["value","Amount","money"],["maturity","Maturity date","date"]]},
     trading:{label:"Trading / equity",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📈",color:"var(--trading)",keyLabel:"Account number",fields:[["label","Provider","text"],["key","Account number","key"],["demat","Demat account (optional)","opt"],["value","Value","money"]]},
-    mf:{label:"Mutual fund",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📊",color:"var(--mf)",keyLabel:"A/C / Folio no.",fields:[["label","Provider / AMC","text"],["key","A/C no. / Folio no.","key"],["value","Value","money"]]},
+    mf:{label:"Mutual fund",grp:"Financial",nature:"financial",liq:"liquid",risk:"high",icon:"📊",color:"var(--mf)",keyLabel:"A/C / Folio no.",fields:[["label","Provider / AMC","text"],["key","A/C no. / Folio no.","key"],["mfcat","Fund category","select",["Equity","Debt","Hybrid"]],["value","Value","money"]]},
     pf:{label:"PF · PPF / EPF",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"🏛️",color:"var(--pf)",keyLabel:"Account / UAN",fields:[["sub","Account type","select",["PPF","EPF","VPF"]],["label","Institution","text"],["key","Account / UAN","key"],["value","Balance","money"]]},
     nsf:{label:"National savings (NSF)",grp:"Financial",nature:"financial",liq:"illiquid",risk:"low",icon:"📜",color:"var(--nsf)",keyLabel:"Certificate no.",fields:[["label","Scheme / holder","text"],["key","Certificate no.","key"],["value","Value","money"]]},
-    property:{label:"Property",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🏠",color:"var(--property)",keyLabel:"Location",fields:[["key","Location","key"],["value","Market value","money"],["papers","Location of papers","text"]]},
+    property:{label:"Property",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🏠",color:"var(--property)",keyLabel:"Location",fields:[["key","Location","key"],["ownership","Ownership","select",["Whole","Fractional"]],["value","Market value","money"],["papers","Location of papers","text"]]},
     gold:{label:"Gold / Silver",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🪙",color:"var(--gold)",keyLabel:"Identifier",fields:[["label","Form (jewellery / coins / bars)","text"],["key","Label / identifier","key"],["weight","Weight (optional)","opt"],["papers","Where it's kept","text"],["value","Value","money"]]},
     locker:{label:"Bank locker",grp:"Physical",nature:"physical",liq:"illiquid",risk:"low",icon:"🗄️",color:"var(--locker)",keyLabel:"Locker no.",fields:[["label","Bank","text"],["branch","Branch","text"],["key","Locker no.","key"],["papers","Key / papers held by","text"],["value","Est. contents value","money"]]},
-    insurance:{label:"Insurance · life / health",grp:"Insurance",nature:"financial",liq:"illiquid",risk:"low",icon:"🛡️",color:"var(--insurance)",keyLabel:"Policy no.",fields:[["sub","Kind (Term / ULIP / Endowment / Health)","text"],["label","Insurer","text"],["key","Policy no.","key"],["cover","Sum assured / cover","money"],["nominee","Nominee (optional)","opt"],["value","Market / terminal value (ULIP, endowment)","money"]]}
+    insurance:{label:"Insurance · life / health",grp:"Insurance",nature:"financial",liq:"illiquid",risk:"low",icon:"🛡️",color:"var(--insurance)",keyLabel:"Policy no.",fields:[["sub","Kind (Term / ULIP / Endowment / Health)","text"],["alloc","Market-linked allocation (ULIP)","select",["Not market-linked","Equity","Debt","Hybrid"]],["label","Insurer","text"],["key","Policy no.","key"],["cover","Sum assured / cover","money"],["nominee","Nominee (optional)","opt"],["value","Market / terminal value (ULIP, endowment)","money"]]}
   };
   const LIAB={
     loan:{label:"Loan",grp:"Liabilities",icon:"📉",color:"var(--down)",keyLabel:"Loan a/c no.",fields:[["label","Bank","text"],["purpose","Purpose","text"],["key","Loan a/c no.","key"],["value","Outstanding","money"]]},
@@ -345,13 +385,17 @@
   // every holding gets an optional free-text Remarks field
   [TYPES,LIAB].forEach(dict=>Object.values(dict).forEach(t=>{ if(!t.fields.some(f=>f[0]==="remarks")) t.fields.push(["remarks","Remarks","opt"]); }));
   const meta=e=> e.kind==="liab"?LIAB[e.type]:TYPES[e.type];
+  const iconOf=e=> (e.type==="property"&&e.ownership==="Fractional")?"🧩":meta(e).icon;
   const softTint={"var(--bank)":"#E9F1F6","var(--fd)":"#EAF3EE","var(--trading)":"#F6ECE4","var(--mf)":"#F0EBF6","var(--property)":"#F5EEDF","var(--pf)":"#E8F0F3","var(--nsf)":"#F1F1E6","var(--gold)":"#F8F1D8","var(--locker)":"#F1ECE1","var(--insurance)":"#E8F1ED","var(--down)":"#F7ECE9"};
   const tint=c=>softTint[c]||"#EEF1F2";
 
   const S={idToken:"",sub:"",email:"",name:"",familyId:"",familyName:"",myRole:"maintainer",detKey:null,valKey:null,ws:null,myVer:0,members:[],creatorSub:""};
   const owners=new Map();   // ownerSub -> {v, entries, name, email, role}
   let myEntries=[], LIVE=null, decryptFailed=false, valDecryptFailed=false, pendingFam=null;
-  let curTab="overview", filter="all", addingType=null, addKind="asset", draft={}, invRole="custodian", editingId=null;
+  let curTab="overview", addingType=null, addKind="asset", draft={}, invRole="custodian", editingId=null;
+  let fClasses=new Set(), fTypes=new Set(), fMembers=new Set(), fPanelOpen=false;
+  const fStageOpen={c:true,t:true,m:true};
+  function resetFilters(){fClasses=new Set();fTypes=new Set();fMembers=new Set();fPanelOpen=false;fStageOpen.c=fStageOpen.t=fStageOpen.m=true;}
   let homeFamilies=[], homeInvites=[];
 
   const $=s=>document.querySelector(s);
@@ -392,10 +436,27 @@
   const netWorth=f=>assetsTotal(f)-liabTotal(f);
   const memberAssets=(f,id)=>valued(f).filter(e=>e.owner===id).reduce((s,e)=>s+(e.value||0),0);
   const memberCount=(f,id)=>f.entries.filter(e=>e.owner===id).length;
-  function natureTotals(f){const o={financial:0,physical:0};valued(f).forEach(e=>{o[TYPES[e.type].nature]+=e.value||0;});return o;}
+  function natureOf(e){return (e.type==="property"&&e.ownership==="Fractional")?"financial":TYPES[e.type].nature;}
+  function natureTotals(f){const o={cash:0,financial:0,physical:0};valued(f).forEach(e=>{o[natureOf(e)]+=e.value||0;});return o;}
   function liqTotals(f){const o={liquid:0,illiquid:0};valued(f).forEach(e=>{o[TYPES[e.type].liq]+=e.value||0;});return o;}
-  function riskTotals(f){const o={high:0,low:0};valued(f).forEach(e=>{o[TYPES[e.type].risk]+=e.value||0;});return o;}
-  function natureCounts(f){const o={financial:0,physical:0};valued(f).forEach(e=>{o[TYPES[e.type].nature]++;});return o;}
+  function instrument(e){
+    if(e.kind==="liab")return "liab";
+    const t=e.type;
+    if(t==="bank"||t==="fd")return "cash";
+    if(t==="trading")return "equity";
+    if(t==="pf"||t==="nsf")return "debt";
+    if(t==="property")return e.ownership==="Fractional"?"otherfin":"physical";
+    if(t==="gold"||t==="locker")return "physical";
+    if(t==="mf"){const c=(e.mfcat||"Equity").toLowerCase();return c==="debt"?"debt":c==="hybrid"?"hybrid":"equity";}
+    if(t==="insurance"){const a=(e.alloc||"").toLowerCase();return a==="equity"?"equity":a==="debt"?"debt":a==="hybrid"?"hybrid":"insurance";}
+    return "otherfin";
+  }
+  function riskOf(e){const i=instrument(e);if(i==="liab")return null;if(i==="equity")return "high";if(i==="hybrid")return "medium";return "low";}
+  function riskTotals(f){const o={high:0,medium:0,low:0};valued(f).forEach(e=>{const r=riskOf(e);if(r&&o[r]!==undefined)o[r]+=e.value||0;});return o;}
+  const PIE=[["equity","Equity","var(--trading)"],["debt","Debt","var(--pf)"],["cash","Cash & deposits","var(--bank)"],["otherfin","Other financials","var(--mf)"],["physical","Physical","var(--property)"]];
+  function pieCat(e){const i=instrument(e);return (i==="equity"||i==="debt"||i==="cash"||i==="physical")?i:"otherfin";}
+  function pieParts(f,byCount){const o={equity:0,debt:0,cash:0,otherfin:0,physical:0};valued(f).forEach(e=>{o[pieCat(e)]+=byCount?1:(e.value||0);});return PIE.map(([k,name,color])=>({name,val:o[k],color}));}
+  function natureCounts(f){const o={cash:0,financial:0,physical:0};valued(f).forEach(e=>{o[natureOf(e)]++;});return o;}
   function insCover(f){const o={life:0,medical:0};insEntries(f).forEach(e=>{o[isMedical(e)?"medical":"life"]+=(e.cover||0);});return o;}
   function insCounts(f){const o={life:0,medical:0};insEntries(f).forEach(e=>{o[isMedical(e)?"medical":"life"]++;});return o;}
   function entryTitle(e){const t=e.type;if(t==="property")return e.key;if(t==="locker")return (e.label||"Locker")+(e.branch?" · "+e.branch:"");if(t==="gold")return "Gold · "+(e.label||"holding");if(t==="loan")return (e.label||"Loan")+(e.purpose?" · "+e.purpose:"");return e.label||meta(e).label;}
@@ -535,7 +596,7 @@
   function finishOpen(){
     if(decryptFailed)toast("Couldn't read details — check the key");
     else if(S.valKey&&valDecryptFailed)toast("Amounts hidden — values key didn't match");
-    curTab="overview";filter="all";rebuild();show("app");renderApp();connectWS();
+    curTab="overview";resetFilters();rebuild();show("app");renderApp();connectWS();
     if(S.myRole==="maintainer"&&S.valKey&&!owners.has(S.sub))publishMine();
   }
   async function openExisting(fid,name,role,pass){
@@ -633,7 +694,7 @@
     else if(liab)val=`<div class="v neg">− ${inrC(e.value||0)}</div>`;
     else if(e.type==="insurance"){const hv=(e.value||0)>0;val=`<div class="v" style="font-size:13px;color:var(--insurance)">${inrC(hv?e.value:(e.cover||0))}<div style="font-size:9px;color:var(--faint);font-weight:600;letter-spacing:.04em;margin-top:2px">${hv?"VALUE":"COVER"}</div></div>`;}
     else val=`<div class="v">${inrC(e.value||0)}</div>`;
-    return `<div class="hold" onclick="openDetail('${e.id}')"><div class="ic" style="background:${tint(M.color)}">${M.icon}</div>
+    return `<div class="hold" onclick="openDetail('${e.id}')"><div class="ic" style="background:${tint(M.color)}">${iconOf(e)}</div>
       <div class="mid"><div class="t">${entryTitle(e)} <span class="keychip">${e.type==="property"?"📍":""}${e.key}</span></div>
       <div class="s"><span>${(e.type==="bank"&&e.acname)?e.acname:M.label}</span> · <span class="by"><span class="av" style="width:16px;height:16px;font-size:8px;border:none;background:${owner.color}">${owner.initials}</span>${mine?"You":owner.name.split(" ")[0]}</span></div></div>
       <div class="rt">${val}${mine&&!liab&&e.type!=="insurance"?'<div class="you">you maintain</div>':""}</div></div>`;}
@@ -652,26 +713,110 @@
     $("#appBody").innerHTML=`${block}<div class="sectitle"><h3>By type</h3></div><div class="alloc">${allocRows||'<div class="ar"><span class="nm" style="color:var(--muted)">No holdings yet</span></div>'}</div>
       <div class="sectitle"><h3>Recent</h3><a onclick="goApp('holdings')">See all</a></div>${f.entries.slice(0,3).map(e=>holdCard(f,e)).join("")||'<div class="empty"><b>Nothing here yet</b>Maintainers add accounts with +.</div>'}<div style="height:14px"></div>`;
   }
+  const FCLASS=["Cash & Deposits","Financial","Physical","Liabilities"];
+  function classOf(e){if(e.kind==="liab")return "Liabilities";const n=natureOf(e);return n==="cash"?"Cash & Deposits":n==="financial"?"Financial":"Physical";}
+  const TOKEN_LABEL={bank:"Bank",fd:"FD",equity:"Equity",debt:"Debt",insurance:"Insurance",property:"Property",gold:"Gold",locker:"Locker",loan:"Loan",creditcard:"Credit card"};
+  const TOKEN_COLOR={bank:"var(--bank)",fd:"var(--fd)",equity:"var(--trading)",debt:"var(--pf)",insurance:"var(--insurance)",property:"var(--property)",gold:"var(--gold)",locker:"var(--locker)",loan:"var(--down)",creditcard:"var(--down)"};
+  const TOKEN_ORDER=["bank","fd","equity","debt","insurance","property","gold","locker","loan","creditcard"];
+  function typeTokens(e){
+    if(e.kind==="liab")return [e.type];
+    const t=e.type;
+    if(t==="bank"||t==="fd"||t==="property"||t==="gold"||t==="locker")return [t];
+    if(t==="trading")return ["equity"];
+    if(t==="pf"||t==="nsf")return ["debt"];
+    if(t==="mf"){const c=(e.mfcat||"Equity").toLowerCase();return c==="hybrid"?["equity","debt"]:c==="debt"?["debt"]:["equity"];}
+    if(t==="insurance"){const a=(e.alloc||"").toLowerCase();return a==="equity"?["equity"]:a==="debt"?["debt"]:a==="hybrid"?["equity","debt"]:["insurance"];}
+    return [t];
+  }
+  function tokenLabel(t){return TOKEN_LABEL[t]||t;}
+  function tokenColor(t){return TOKEN_COLOR[t]||"var(--muted)";}
+  function fcaret(open){return `<svg class="sx" width="16" height="16" viewBox="0 0 24 24" fill="none"${open?"":' style="transform:rotate(-90deg)"'}><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
   function renderHoldings(f){
-    const chips=[["all","All"],...GROUPS.filter(g=>f.entries.some(e=>meta(e).grp===g)).map(g=>["g:"+g,g]),...f.members.filter(m=>m.role!=="custodian"&&memberCount(f,m.id)>0).map(m=>["m:"+m.id,m.you?"You":m.name.split(" ")[0]])];
-    const chipHtml=chips.map(c=>`<button class="chip ${filter===c[0]?"on":""}" onclick="setFilter('${c[0]}')">${c[1]}</button>`).join("");
-    let list=f.entries.slice();if(filter.indexOf("g:")===0)list=list.filter(e=>meta(e).grp===filter.slice(2));if(filter.indexOf("m:")===0)list=list.filter(e=>e.owner===filter.slice(2));
+    const stage=(key,n,title,bodyId)=>`<div class="stage ${fStageOpen[key]?"":"closed"}" id="fst-${key}"><div class="num">${n}</div><div class="shead" onclick="fToggleStage('${key}')"><div class="stitle">${title}</div><div class="ssum" id="fsum-${key}"></div>${fcaret(true)}</div><div class="sbody" id="${bodyId}"></div></div>`;
+    $("#appBody").innerHTML=`
+      <div class="filterbar ${fPanelOpen?"open":""}" id="fbar" onclick="fTogglePanel()">
+        <div class="fic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 5h18l-7 8v5l-4 2v-7L3 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <div class="ft"><b>Filter holdings</b><span id="fbarsum">All holdings</span></div>
+        <div class="badge" id="fbadge" style="display:none">0</div>
+        <div class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="panel ${fPanelOpen?"open":""}" id="fpanel">
+        <div class="panel-inner">
+          ${stage("c",1,"Class","fClassChips")}
+          ${stage("t",2,"Type","fTypeBody")}
+          ${stage("m",3,"Maintained by","fMemberChips")}
+        </div>
+        <div class="panel-foot"><button class="clearbtn" id="fclear" onclick="fClear(event)">Clear all</button><div class="cnt"><b id="frescount">0</b> shown</div></div>
+      </div>
+      <div class="sectitle" style="margin-top:16px"><h3>Holdings</h3><span class="eyebrow" id="fsummary"></span></div>
+      <div id="fHoldList"></div><div style="height:14px"></div>`;
+    updateFunnel();
+  }
+  function fFiltered(f){
+    return f.entries.filter(e=>{
+      const cls=classOf(e);
+      return (!fClasses.size||fClasses.has(cls)) && (!fTypes.size||typeTokens(e).some(tk=>fTypes.has(tk))) && (!fMembers.size||fMembers.has(e.owner));
+    });
+  }
+  function fScopeClasses(){return fClasses.size?[...fClasses]:FCLASS;}
+  function fPruneTypes(f){const allowed=new Set();fScopeClasses().forEach(c=>f.entries.forEach(e=>{if(classOf(e)===c)typeTokens(e).forEach(tk=>allowed.add(tk));}));[...fTypes].forEach(t=>{if(!allowed.has(t))fTypes.delete(t);});}
+  function fNames(set,fn){return [...set].map(fn).join(", ");}
+  function updateFunnel(){
+    const f=cur();
+    fPruneTypes(f);
+    const presentClasses=FCLASS.filter(c=>f.entries.some(e=>classOf(e)===c));
+    $("#fClassChips").innerHTML=presentClasses.map(c=>`<button class="fchip ${fClasses.has(c)?"on":""}" onclick="fToggleClass('${c}')">${c}</button>`).join("")||'<span class="fnone">No holdings yet</span>';
+    $("#fTypeBody").innerHTML=fScopeClasses().filter(c=>presentClasses.includes(c)).map(c=>{
+      const toks=[...new Set(f.entries.filter(e=>classOf(e)===c).flatMap(e=>typeTokens(e)))].sort((a,b)=>TOKEN_ORDER.indexOf(a)-TOKEN_ORDER.indexOf(b));
+      if(!toks.length)return "";
+      const chips=toks.map(t=>`<button class="fchip ${fTypes.has(t)?"on":""}" onclick="fToggleType('${t}')"><span class="dot" style="background:${tokenColor(t)}"></span>${tokenLabel(t)}</button>`).join("");
+      return `<div class="grp"><div class="glab">${c}</div><div class="chips">${chips}</div></div>`;
+    }).join("");
+    const mem=f.members.filter(m=>m.role!=="custodian"&&memberCount(f,m.id)>0);
+    $("#fMemberChips").innerHTML=mem.map(m=>`<button class="fchip ${fMembers.has(m.id)?"on":""}" onclick="fToggleMember('${m.id}')"><span class="mav">${(m.you?"You":m.name)[0]}</span>${m.you?"You":m.name.split(" ")[0]}</button>`).join("")||'<span class="fnone">No maintainers</span>';
+    const active=fClasses.size+fTypes.size+fMembers.size;
+    const bd=$("#fbadge");bd.style.display=active?"grid":"none";bd.textContent=active;
+    $("#fbar").classList.toggle("active",active>0);
+    const parts=[];if(fClasses.size)parts.push(fNames(fClasses,c=>c));if(fTypes.size)parts.push(fNames(fTypes,tokenLabel));if(fMembers.size)parts.push(fNames(fMembers,id=>{const m=f.members.find(x=>x.id===id);return m?(m.you?"You":m.name.split(" ")[0]):id;}));
+    $("#fbarsum").textContent=parts.length?parts.join("  ·  "):"All holdings";
+    $("#fsum-c").textContent=fClasses.size?fNames(fClasses,c=>c):"";
+    $("#fsum-t").textContent=fTypes.size?fNames(fTypes,tokenLabel):"";
+    $("#fsum-m").textContent=fMembers.size?fNames(fMembers,id=>{const m=f.members.find(x=>x.id===id);return m?(m.you?"You":m.name.split(" ")[0]):id;}):"";
+    $("#fst-c").classList.toggle("has",fClasses.size>0);$("#fst-t").classList.toggle("has",fTypes.size>0);$("#fst-m").classList.toggle("has",fMembers.size>0);
+    $("#fclear").disabled=active===0;
+    const list=fFiltered(f);
     const aShown=list.filter(e=>e.kind==="asset"&&(e.type!=="insurance"||(e.value||0)>0)).reduce((s,e)=>s+e.value,0);
     const lShown=list.filter(e=>e.kind==="liab").reduce((s,e)=>s+e.value,0);
-    const summ=showAmt()?`${list.length} · ${inrC(aShown-lShown)}`:`${list.length} items`;
-    $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Holdings</h3><span class="eyebrow">${summ}</span></div><div class="chips">${chipHtml}</div>${list.length?list.map(e=>holdCard(f,e)).join(""):'<div class="empty"><b>Nothing matches</b>No entries for this filter.</div>'}<div style="height:14px"></div>`;
+    $("#fsummary").textContent=showAmt()?`${list.length} · ${inrC(aShown-lShown)}`:`${list.length} items`;
+    $("#frescount").textContent=list.length;
+    $("#fHoldList").innerHTML=list.length?list.map(e=>holdCard(f,e)).join(""):'<div class="empty"><b>Nothing matches</b>No entries for this filter.</div>';
   }
-  window.setFilter=function(v){filter=v;renderHoldings(cur());};
+  window.fTogglePanel=function(){fPanelOpen=!fPanelOpen;$("#fpanel").classList.toggle("open",fPanelOpen);$("#fbar").classList.toggle("open",fPanelOpen);};
+  window.fToggleStage=function(key){event.stopPropagation();fStageOpen[key]=!fStageOpen[key];$("#fst-"+key).classList.toggle("closed",!fStageOpen[key]);};
+  window.fToggleClass=function(c){fClasses.has(c)?fClasses.delete(c):fClasses.add(c);updateFunnel();};
+  window.fToggleType=function(t){fTypes.has(t)?fTypes.delete(t):fTypes.add(t);updateFunnel();};
+  window.fToggleMember=function(id){fMembers.has(id)?fMembers.delete(id):fMembers.add(id);updateFunnel();};
+  window.fClear=function(e){if(e)e.stopPropagation();fClasses.clear();fTypes.clear();fMembers.clear();updateFunnel();};
   function splitBlock(title,cap,parts){const tot=parts.reduce((s,p)=>s+p.val,0)||1;const track=parts.filter(p=>p.val>0).map(p=>`<div class="seg" style="width:${p.val/tot*100}%;background:${p.color}"></div>`).join("");const leg=parts.map(p=>`<div class="lr"><span class="d" style="background:${p.color}"></span><span class="nm">${p.name}</span><span class="vv">${showAmt()?inrC(p.val):p.val}</span><span class="pp">${Math.round(p.val/tot*100)}%</span></div>`).join("");return `<div class="split"><h4>${title}</h4><div class="cap">${cap}</div><div class="track">${track}</div><div class="legend">${leg}</div></div>`;}
+  function pieBlock(title,cap,parts){
+    const data=parts.filter(p=>p.val>0);const tot=data.reduce((s,p)=>s+p.val,0);
+    let svg;
+    if(!tot){svg=`<svg viewBox="0 0 120 120" width="116" height="116"><circle cx="60" cy="60" r="44" fill="none" stroke="var(--line2)" stroke-width="22"/></svg>`;}
+    else if(data.length===1){svg=`<svg viewBox="0 0 120 120" width="116" height="116"><circle cx="60" cy="60" r="44" fill="none" stroke="${data[0].color}" stroke-width="22"/></svg>`;}
+    else{const R=55,r=33,cx=60,cy=60;let a0=-Math.PI/2;const arcs=data.map(p=>{const frac=p.val/tot,a1=a0+frac*2*Math.PI,big=frac>0.5?1:0;const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1),xi1=cx+r*Math.cos(a1),yi1=cy+r*Math.sin(a1),xi0=cx+r*Math.cos(a0),yi0=cy+r*Math.sin(a0);a0=a1;return `<path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 ${big} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} L ${xi1.toFixed(2)} ${yi1.toFixed(2)} A ${r} ${r} 0 ${big} 0 ${xi0.toFixed(2)} ${yi0.toFixed(2)} Z" fill="${p.color}"/>`;}).join("");svg=`<svg viewBox="0 0 120 120" width="116" height="116">${arcs}</svg>`;}
+    const denom=tot||1;
+    const leg=parts.map(p=>`<div class="lr"><span class="d" style="background:${p.color}"></span><span class="nm">${p.name}</span><span class="vv">${showAmt()?inrC(p.val):p.val}</span><span class="pp">${Math.round(p.val/denom*100)}%</span></div>`).join("");
+    return `<div class="split"><h4>${title}</h4><div class="cap">${cap}</div><div class="pie-wrap">${svg}<div class="legend">${leg}</div></div></div>`;
+  }
   function insBlock(life,medical,isCount){const fmtv=v=>isCount?(v+" "+(v===1?"policy":"policies")):(v?inrC(v):"—");const card=(lab,val,c)=>`<div style="flex:1;background:${c};border:1px solid var(--line);border-radius:12px;padding:13px 14px"><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${lab}</div><div style="font-family:var(--serif);font-weight:600;font-size:18px;margin-top:5px;font-variant-numeric:tabular-nums">${val}</div></div>`;return `<div class="split"><h4>Insurance cover</h4><div class="cap">Life and medical cover — protection, separate from net worth</div><div style="display:flex;gap:10px;margin-top:4px">${card("Life cover",fmtv(life),"#E8F1ED")}${card("Medical cover",fmtv(medical),"#F0EBF6")}</div></div>`;}
   function renderInsights(f){
     const hasIns=insEntries(f).length>0;
-    if(!showAmt()){const nc=natureCounts(f),icn=insCounts(f);$("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">by count</span></div><div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>Amounts hidden in your custodian view — shown by count.</span></div>${splitBlock("Financial vs physical","Holdings of each nature",[{name:"Financial",val:nc.financial,color:"var(--bank)"},{name:"Physical",val:nc.physical,color:"var(--property)"}])}${hasIns?insBlock(icn.life,icn.medical,true):""}<div style="height:14px"></div>`;return;}
-    const nt=natureTotals(f),lt=liqTotals(f),rt=riskTotals(f),nw=netWorth(f),ic=insCover(f);
+    if(!showAmt()){const icn=insCounts(f);$("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">by count</span></div><div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2.5" stroke="#1E4A53" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#1E4A53" stroke-width="1.6"/></svg><span>Amounts hidden in your custodian view — shown by count.</span></div>${pieBlock("Asset mix","Holdings by category",pieParts(f,true))}${hasIns?insBlock(icn.life,icn.medical,true):""}<div style="height:14px"></div>`;return;}
+    const lt=liqTotals(f),rt=riskTotals(f),nw=netWorth(f),ic=insCover(f);
     $("#appBody").innerHTML=`<div class="sectitle" style="margin-top:8px"><h3>Insights</h3><span class="eyebrow">net worth ${inrC(nw)}</span></div>
-      ${splitBlock("Financial vs physical","Life-policy investment value counts as financial; cover doesn't",[{name:"Financial assets",val:nt.financial,color:"var(--bank)"},{name:"Physical assets",val:nt.physical,color:"var(--property)"}])}
+      ${pieBlock("Asset mix","Equity, debt, cash & deposits, other financials and physical; ULIP value sits under its allocation",pieParts(f,false))}
       ${splitBlock("Liquid vs illiquid","What you could access quickly",[{name:"Liquid",val:lt.liquid,color:"var(--fd)"},{name:"Illiquid",val:lt.illiquid,color:"var(--locker)"}])}
-      ${splitBlock("Risk profile","Equity & equity funds = high risk",[{name:"High risk",val:rt.high,color:"var(--trading)"},{name:"Low risk",val:rt.low,color:"var(--fd)"}])}
+      ${splitBlock("Risk profile","Equity high · hybrid medium · debt, PF, NSF & cash low",[{name:"High risk",val:rt.high,color:"var(--trading)"},{name:"Medium risk",val:rt.medium,color:"var(--gold)"},{name:"Low risk",val:rt.low,color:"var(--fd)"}])}
       <div class="split"><h4>Liabilities</h4><div class="cap">Subtracted from assets to get net worth</div><div class="legend"><div class="lr"><span class="d" style="background:var(--down)"></span><span class="nm">Total owed</span><span class="vv" style="color:var(--down)">− ${inrC(liabTotal(f)).replace("− ","")}</span></div><div class="lr"><span class="d" style="background:var(--up)"></span><span class="nm">Net worth</span><span class="vv">${inrC(nw)}</span></div></div></div>
       ${hasIns?insBlock(ic.life,ic.medical,false):""}<div style="height:14px"></div>`;
   }
@@ -701,6 +846,8 @@
   // ---------- add ----------
   function buildForm(){
     const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];
+    if(addingType==="property"&&draft.ownership===undefined)draft.ownership="Whole";
+    if(addingType==="insurance"&&draft.alloc===undefined)draft.alloc="Not market-linked";
     $("#formTitle").textContent=(editingId?"Edit ":"New ")+M.label.split(" · ")[0].toLowerCase();
     $("#formCap").textContent="The "+M.keyLabel.toLowerCase()+" must be unique in this family.";
     $("#formFields").innerHTML=M.fields.map(f=>{
@@ -733,21 +880,24 @@
   };
   function checkKey(val){const h=$("#keyHelp");if(!h)return;val=(val||"").trim();const f=cur();if(!val){h.className="help";h.style.color="";h.textContent="Stops two members tracking the same account.";draft._k=false;return;}const clash=f.entries.find(e=>e.id!==editingId&&(e.key||"").toLowerCase()===val.toLowerCase());if(clash){const o=member(f,clash.owner);h.className="help warn";h.style.color="";h.textContent="⚠ Already tracked by "+(o.you?"you":o.name.split(" ")[0])+".";draft._k=false;}else{h.className="help";h.style.color="var(--up)";h.textContent="✓ Key is free.";draft._k=true;}}
   function validate(){const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];let ok=true;M.fields.forEach(f=>{const k=f[0],kind=f[2];if(kind==="opt"||kind==="date")return;if(kind==="key"){if(!draft._k)ok=false;}else if(kind==="money"){if(draft[k]===undefined||draft[k]<0)ok=false;if(k==="value"&&addingType!=="insurance"&&!draft[k])ok=false;}else if(!draft[k])ok=false;});$("#saveBtn").disabled=!ok;}
-  window.saveEntry=async function(){const wasEdit=!!editingId;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];const e={kind:addKind,type:addingType,id:editingId||(S.sub+":"+crypto.randomUUID())};M.fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;if(wasEdit){const idx=myEntries.findIndex(x=>x.id===editingId);if(idx>=0)myEntries[idx]=e;else myEntries.unshift(e);}else myEntries.unshift(e);editingId=null;await publishMine();goApp("holdings");filter="all";renderHoldings(cur());toast(wasEdit?"Updated & published":"Added & published");};
+  window.saveEntry=async function(){const wasEdit=!!editingId;const M=addKind==="liab"?LIAB[addingType]:TYPES[addingType];const e={kind:addKind,type:addingType,id:editingId||(S.sub+":"+crypto.randomUUID())};M.fields.forEach(([k])=>{if(draft[k]!==undefined)e[k]=draft[k];});if(e.value===undefined)e.value=0;if(wasEdit){const idx=myEntries.findIndex(x=>x.id===editingId);if(idx>=0)myEntries[idx]=e;else myEntries.unshift(e);}else myEntries.unshift(e);editingId=null;await publishMine();goApp("holdings");resetFilters();renderHoldings(cur());toast(wasEdit?"Updated & published":"Added & published");};
 
   window.openDetail=function(id){const f=cur();const e=f.entries.find(x=>x.id===id);if(!e)return;const owner=member(f,e.owner),mine=owner.you,M=meta(e),liab=e.kind==="liab";const rows=[];
     if(e.sub)rows.push(["Kind",e.sub]);
+    if(e.type==="mf"&&e.mfcat)rows.push(["Fund category",e.mfcat+" · "+({high:"high risk",medium:"medium risk",low:"low risk"})[riskOf(e)]]);
+    if(e.type==="insurance"&&e.alloc&&e.alloc!=="Not market-linked")rows.push(["Market-linked",e.alloc+" · "+({high:"high risk",medium:"medium risk",low:"low risk"})[riskOf(e)]]);
     if(e.label&&e.type!=="property")rows.push([(e.type==="trading"||e.type==="mf"||e.type==="insurance")?"Provider":(e.type==="loan"||e.type==="creditcard")?"Issuer":"Bank",e.label]);
     if(e.acname)rows.push(["Account name",e.acname]);
     if(e.branch)rows.push(["Branch",e.branch]);if(e.purpose)rows.push(["Purpose",e.purpose]);
     rows.push([M.keyLabel+" (key)",e.key]);if(e.demat)rows.push(["Demat account",e.demat]);if(e.weight)rows.push(["Weight",e.weight]);if(e.nominee)rows.push(["Nominee",e.nominee]);
     if(e.papers)rows.push([e.type==="locker"?"Key / papers":"Location of papers",e.papers]);
+    if(e.type==="property"&&e.ownership)rows.push(["Ownership",e.ownership+(e.ownership==="Fractional"?" · counts as financial":"")]);
     if(e.limit!==undefined)rows.push(["Credit limit",showAmt()?inr(e.limit):"•••"]);if(e.cover!==undefined)rows.push(["Sum assured",showAmt()?inr(e.cover):"•••"]);
     if(e.maturity)rows.push(["Maturity date",fmtDate(e.maturity)]);
     rows.push([liab?"Outstanding":(e.type==="property"?"Market value":(e.type==="insurance"?"Market / terminal value":"Value")),showAmt()?`<span class="${liab?"neg":""}">${liab?"− ":""}${inr(e.value||0)}</span>`:`<span class="mask">•••</span>`]);
     if(e.remarks)rows.push(["Remarks",e.remarks]);
     rows.push(["Maintained by",mine?"You":owner.name]);
-    $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${M.icon}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
+    $("#detailBody").innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-top:6px"><div class="ic" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:${tint(M.color)}">${iconOf(e)}</div><div><div class="eyebrow">${M.label}</div><h1 class="h-title" style="font-size:21px">${entryTitle(e)}</h1></div></div>
       <div class="nw" style="margin-top:16px;padding:16px">${rows.map(r=>`<div class="drow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>
       ${mine&&canEdit()?`<button class="btn" style="margin-top:16px" onclick="startEdit('${id}')">Edit entry</button><button class="btn ghost" style="margin-top:10px;color:var(--down);border-color:#E7C7BF" onclick="deleteEntry('${id}')">Delete entry</button>`:`<div class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1E4A53" stroke-width="1.5"/><path d="M12 8v5M12 16h.01" stroke="#1E4A53" stroke-width="1.6" stroke-linecap="round"/></svg><span>${mine?"Read-only role here.":"Maintained by "+owner.name.split(" ")[0]+"."}</span></div>`}
       <button class="btn ghost" style="margin-top:10px" onclick="show('app')">Back</button>`;show("detail");};
